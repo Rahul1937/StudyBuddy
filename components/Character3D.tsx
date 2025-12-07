@@ -54,17 +54,11 @@ function CharacterModel({ onCharacterReady, isTalking, avatarUrl }: Character3DP
   // Load GLB model - useGLTF must be called unconditionally
   // It will return null/undefined if model doesn't exist
   // useGLTF can handle URL changes, but we need to preload if it's a new URL
-  let gltf: any = null
-  try {
-    // Preload if it's a custom avatar URL (external)
-    if (processedAvatarUrl && processedAvatarUrl.startsWith('http')) {
-      useGLTF.preload(processedAvatarUrl)
-    }
-    gltf = useGLTF(modelUrl, true)
-  } catch (error) {
-    // If useGLTF throws, we'll use fallback
-    console.log('Model load failed, using fallback:', error)
+  // Preload if it's a custom avatar URL (external)
+  if (processedAvatarUrl && processedAvatarUrl.startsWith('http')) {
+    useGLTF.preload(processedAvatarUrl)
   }
+  const gltf = useGLTF(modelUrl, true)
 
   // Get animations - useAnimations needs the scene object, not just a ref
   // We'll pass the scene directly if available, otherwise use group ref
@@ -647,6 +641,7 @@ function CharacterModel({ onCharacterReady, isTalking, avatarUrl }: Character3DP
 
   // Handle talking state
   useEffect(() => {
+    const hasCompatibleAnimations = !isRPMAvatar || (actions && Object.keys(actions).length > 0)
     if (useFallback || !actions || Object.keys(actions).length === 0 || (isRPMAvatar && !hasCompatibleAnimations)) return
 
     if (isTalking) {
@@ -674,10 +669,11 @@ function CharacterModel({ onCharacterReady, isTalking, avatarUrl }: Character3DP
         setCurrentAnimation('idle')
       }
     }
-  }, [isTalking, actions, currentAnimation, useFallback])
+  }, [isTalking, actions, currentAnimation, useFallback, isRPMAvatar])
 
   // Update animation mixer every frame (only if we have compatible animations)
   useFrame((state, delta) => {
+    const hasCompatibleAnimations = !isRPMAvatar || (actions && Object.keys(actions).length > 0)
     if (mixer && !(isRPMAvatar && !hasCompatibleAnimations)) {
       mixer.update(delta)
     }

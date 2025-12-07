@@ -25,22 +25,25 @@ export default function DashboardPage() {
   const [timeRange, setTimeRange] = useState<'daily' | 'weekly' | 'monthly'>('daily')
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    fetchStats()
-  }, [timeRange])
-
   const fetchStats = async () => {
     setLoading(true)
     try {
-      const response = await fetch(`/api/stats?type=${timeRange}`)
-      const data = await response.json()
-      setStats(data)
+      const response = await fetch(`/api/stats?range=${timeRange}`)
+      if (response.ok) {
+        const data = await response.json()
+        setStats(data)
+      }
     } catch (error) {
       console.error('Error fetching stats:', error)
     } finally {
       setLoading(false)
     }
   }
+
+  useEffect(() => {
+    fetchStats()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [timeRange])
 
   if (loading) {
     return <div className="text-center py-12">Loading stats...</div>

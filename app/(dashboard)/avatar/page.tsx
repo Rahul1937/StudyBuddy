@@ -103,7 +103,7 @@ export default function AvatarPage() {
               alert(`Error: ${error.message}`)
             }}
             height="700px"
-            subdomain="demo" // TODO: Replace with your subdomain from studio.readyplayer.me
+            subdomain="rahul-choudhary" // TODO: Replace with your subdomain from studio.readyplayer.me
           />
           {saving && (
             <div className="absolute top-4 right-4 bg-blue-600 text-white px-4 py-2 rounded-lg shadow-lg flex items-center gap-2 z-20">
@@ -197,7 +197,7 @@ export default function AvatarPage() {
               <ol className="list-decimal list-inside space-y-1 text-sm text-slate-600 dark:text-slate-400">
                 <li>Customize your avatar's appearance, clothing, and style in the editor on the left</li>
                 <li>See a live preview of your avatar on the right as you customize</li>
-                <li>Click "Export" when you're happy with your avatar</li>
+                <li>Click &quot;Export&quot; when you&apos;re happy with your avatar</li>
                 <li>Your avatar will automatically be saved and used throughout the app with all animations</li>
               </ol>
             </div>
