@@ -21,12 +21,12 @@ export default function ChatPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100 mb-2">Chat with Agent</h1>
-        <p className="text-slate-600 dark:text-slate-400 font-medium">Have a conversation with your AI study assistant</p>
-      </div>
+        <div>
+          <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100 mb-2">Chat with Agent</h1>
+          <p className="text-slate-600 dark:text-slate-400 font-medium">Have a conversation with your AI study assistant</p>
+        </div>
 
-      <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-6 flex flex-col border border-slate-200 dark:border-slate-700">
+        <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-6 flex flex-col border border-slate-200 dark:border-slate-700">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">AI Assistant</h2>
             <button
@@ -87,7 +87,6 @@ export default function ChatPage() {
             </button>
           </div>
         </div>
-      </div>
     </div>
   )
 }
