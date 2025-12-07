@@ -3,7 +3,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { useAIChat } from '@/contexts/AIChatContext'
-import Character3D from './Character3D'
 
 export function ChatWidget() {
   const [isOpen, setIsOpen] = useState(false)
@@ -13,24 +12,6 @@ export function ChatWidget() {
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
   const pathname = usePathname()
-  const [characterControls, setCharacterControls] = useState<any>(null)
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
-
-  useEffect(() => {
-    fetchAvatar()
-  }, [])
-
-  const fetchAvatar = async () => {
-    try {
-      const response = await fetch('/api/user/avatar')
-      if (response.ok) {
-        const data = await response.json()
-        setAvatarUrl(data.avatarUrl)
-      }
-    } catch (error) {
-      console.error('Error fetching avatar:', error)
-    }
-  }
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -46,19 +27,11 @@ export function ChatWidget() {
 
     await sendMessage(messageInput)
     setMessageInput('')
-    if (characterControls) {
-      characterControls.playTalk()
-    }
-    setTimeout(() => {
-      if (characterControls) {
-        characterControls.playIdle()
-      }
-    }, 2000)
   }
 
   const handleExpand = () => {
     setIsFullScreen(true)
-    router.push('/study')
+    router.push('/chat')
   }
 
   const handleClose = () => {
@@ -137,15 +110,6 @@ export function ChatWidget() {
                 </svg>
               </button>
             </div>
-          </div>
-
-          {/* Character Display */}
-          <div className="h-32 bg-slate-100 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700">
-            <Character3D
-              onCharacterReady={setCharacterControls}
-              isTalking={isLoading}
-              avatarUrl={avatarUrl}
-            />
           </div>
 
           {/* Messages */}

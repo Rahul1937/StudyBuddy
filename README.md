@@ -1,13 +1,12 @@
 # StudyBuddy
 
-A full-stack Next.js study time tracking application with an AI assistant, 3D animated character, and comprehensive analytics.
+A full-stack Next.js study time tracking application with an AI assistant and comprehensive analytics.
 
 ## Features
 
 - 🔐 **Authentication**: NextAuth with Email/Password and Google OAuth
 - ⏱️ **Study Timer**: Track study sessions with categories (revision, self-study, class, others)
 - 🤖 **AI Assistant**: Free AI chat powered by Groq API (Llama 3) with task/note creation
-- 🎨 **3D Character**: Interactive animated character with React Three Fiber
 - 📊 **Analytics Dashboard**: Daily, weekly, and monthly stats with Recharts
 - ✅ **Tasks Management**: Create and manage study tasks
 - 📝 **Notes**: Save and organize study notes
@@ -20,7 +19,6 @@ A full-stack Next.js study time tracking application with an AI assistant, 3D an
 - **Styling**: TailwindCSS
 - **Database**: Prisma ORM with PostgreSQL (Vercel Postgres/Supabase)
 - **Authentication**: NextAuth.js
-- **3D Graphics**: React Three Fiber + Drei
 - **AI**: Groq API (Llama 3)
 - **Charts**: Recharts
 - **Deployment**: Vercel
@@ -83,9 +81,9 @@ A full-stack Next.js study time tracking application with an AI assistant, 3D an
    npx prisma generate
    ```
 
-6. **Add 3D Character Model (Optional)**
+6. **You're all set!**
    
-   Place your GLB model file at `public/models/character.glb`. If no model is provided, the app will use a fallback character.
+   The application is ready to use.
 
 ## Running the Application
 
@@ -125,8 +123,9 @@ studybuddy/
 │   ├── providers.tsx          # Context providers
 │   └── globals.css            # Global styles
 ├── components/
-│   ├── Character3D.tsx        # 3D animated character
-│   └── Sidebar.tsx            # Navigation sidebar
+│   ├── Sidebar.tsx            # Navigation sidebar
+│   ├── Header.tsx             # App header
+│   └── ChatWidget.tsx         # Floating chat widget
 ├── contexts/
 │   ├── TimerContext.tsx       # Timer state management
 │   └── AIChatContext.tsx      # AI chat state management
@@ -137,8 +136,7 @@ studybuddy/
 │   └── utils.ts               # Utility functions
 ├── prisma/
 │   └── schema.prisma          # Database schema
-└── public/
-    └── models/                # 3D model files (optional)
+└── public/                    # Static assets
 ```
 
 ## API Routes
@@ -229,7 +227,7 @@ studybuddy/
 - Select a category before starting
 - Real-time elapsed time display
 - Automatic session saving on stop
-- Visual feedback with 3D character
+- Pause and resume functionality
 
 ### AI Assistant
 - Natural language chat interface
@@ -243,11 +241,6 @@ studybuddy/
 - Time series graph (line chart)
 - Category comparison (bar chart)
 
-### 3D Character
-- Click to wave animation
-- Talking animation when AI responds
-- Idle animation by default
-- Fallback character if model not found
 
 ## Troubleshooting
 
@@ -266,10 +259,6 @@ studybuddy/
 - Check Groq API quota/limits
 - Review browser console for errors
 
-### 3D Character Not Loading
-- Place GLB model at `public/models/character.glb`
-- Check browser console for loading errors
-- Fallback character will display if model fails
 
 ## Development
 

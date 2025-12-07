@@ -2,30 +2,11 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { useAIChat } from '@/contexts/AIChatContext'
-import Character3D from '@/components/Character3D'
 
 export default function ChatPage() {
   const { messages, isLoading, sendMessage, clearMessages } = useAIChat()
   const [messageInput, setMessageInput] = useState('')
   const messagesEndRef = useRef<HTMLDivElement>(null)
-  const [characterControls, setCharacterControls] = useState<any>(null)
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
-
-  useEffect(() => {
-    fetchAvatar()
-  }, [])
-
-  const fetchAvatar = async () => {
-    try {
-      const response = await fetch('/api/user/avatar')
-      if (response.ok) {
-        const data = await response.json()
-        setAvatarUrl(data.avatarUrl)
-      }
-    } catch (error) {
-      console.error('Error fetching avatar:', error)
-    }
-  }
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -36,14 +17,6 @@ export default function ChatPage() {
 
     await sendMessage(messageInput)
     setMessageInput('')
-    if (characterControls) {
-      characterControls.playTalk()
-    }
-    setTimeout(() => {
-      if (characterControls) {
-        characterControls.playIdle()
-      }
-    }, 2000)
   }
 
   return (
@@ -53,27 +26,7 @@ export default function ChatPage() {
         <p className="text-slate-600 dark:text-slate-400 font-medium">Have a conversation with your AI study assistant</p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* 3D Character - Larger and more prominent */}
-        <div className="lg:col-span-1">
-          <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-6 border border-slate-200 dark:border-slate-700 h-full">
-            <h2 className="text-xl font-bold mb-4 text-slate-900 dark:text-slate-100">Your Study Companion</h2>
-            <div className="h-[500px] bg-slate-100 dark:bg-slate-900 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700">
-              <Character3D
-                onCharacterReady={setCharacterControls}
-                isTalking={isLoading}
-                scale={2}
-                avatarUrl={avatarUrl}
-              />
-            </div>
-            <p className="text-sm text-slate-600 dark:text-slate-400 mt-4 text-center font-medium">
-              Click on the character to make it wave! 👋
-            </p>
-          </div>
-        </div>
-
-        {/* Chat Section */}
-        <div className="lg:col-span-2 bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-6 flex flex-col border border-slate-200 dark:border-slate-700">
+      <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-6 flex flex-col border border-slate-200 dark:border-slate-700">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">AI Assistant</h2>
             <button
@@ -135,7 +88,6 @@ export default function ChatPage() {
           </div>
         </div>
       </div>
-    </div>
   )
 }
 

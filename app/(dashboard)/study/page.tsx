@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react'
 import { useTimer } from '@/contexts/TimerContext'
-import Character3D from '@/components/Character3D'
 import { formatTime } from '@/lib/utils'
 
 const categories = [
@@ -15,24 +14,6 @@ const categories = [
 export default function StudyPage() {
   const { isRunning, isPaused, elapsedTime, category, startTimer, pauseTimer, resumeTimer, stopTimer, resetTimer } = useTimer()
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
-  const [characterControls, setCharacterControls] = useState<any>(null)
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
-
-  useEffect(() => {
-    fetchAvatar()
-  }, [])
-
-  const fetchAvatar = async () => {
-    try {
-      const response = await fetch('/api/user/avatar')
-      if (response.ok) {
-        const data = await response.json()
-        setAvatarUrl(data.avatarUrl)
-      }
-    } catch (error) {
-      console.error('Error fetching avatar:', error)
-    }
-  }
 
   // Sync selectedCategory with timer category when restored
   useEffect(() => {
@@ -52,51 +33,16 @@ export default function StudyPage() {
   const handleRecordSession = async () => {
     try {
       await stopTimer()
-      if (characterControls) {
-        characterControls.playCelebrate()
-      }
       alert('Study session saved! 🎉')
     } catch (error) {
       alert('Failed to save session')
     }
   }
 
-  // Make character react to timer events
-  useEffect(() => {
-    if (!characterControls) return
-    
-    if (isRunning && !isPaused) {
-      // Character gets excited when timer starts
-      characterControls.playExcited()
-      setTimeout(() => {
-        if (characterControls) characterControls.playIdle()
-      }, 2000)
-    } else if (isPaused) {
-      // Character looks confused when paused
-      characterControls.playConfused()
-    }
-  }, [isRunning, isPaused, characterControls])
-
   return (
-    <div className="relative min-h-[calc(100vh-8rem)] overflow-hidden">
-      {/* 3D Character Background - Positioned on left side */}
-      <div className="absolute left-0 bottom-0 w-1/2 h-full z-[1]">
-        <div className="absolute inset-0 flex items-end justify-start pl-4 md:pl-8 pb-4">
-          <div className="w-full h-full max-w-md flex items-end cursor-pointer relative z-[1]">
-            <Character3D
-              onCharacterReady={setCharacterControls}
-              isTalking={false}
-              scale={2.5}
-              avatarUrl={avatarUrl}
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* Timer Section - Floating on the right side only */}
-      <div className="absolute right-0 top-0 bottom-0 w-1/2 z-10 flex justify-end items-start p-4 md:p-6 pointer-events-none">
-        <div className="w-full max-w-md bg-white/95 dark:bg-slate-800/95 backdrop-blur-xl rounded-2xl shadow-2xl p-6 border border-slate-200/50 dark:border-slate-700/50 pointer-events-auto">
-          <div className="mb-6">
+    <div className="max-w-4xl mx-auto">
+      <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-6 border border-slate-200 dark:border-slate-700">
+        <div className="mb-6">
             <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100 mb-2">Study Timer</h1>
             <p className="text-slate-600 dark:text-slate-400 font-medium mb-4">Track your study sessions</p>
             <h2 className="text-xl font-bold mb-4 text-slate-900 dark:text-slate-100">Timer</h2>
@@ -178,7 +124,6 @@ export default function StudyPage() {
                 </button>
               </div>
             )}
-          </div>
         </div>
       </div>
     </div>
