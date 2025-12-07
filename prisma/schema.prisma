@@ -44,6 +44,7 @@ model User {
   emailVerified DateTime?
   image         String?
   password      String?
+  avatarUrl     String?   // ReadyPlayerMe avatar URL
   accounts      Account[]
   sessions      Session[]
   studySessions StudySession[]

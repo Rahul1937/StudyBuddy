@@ -1,8 +1,7 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { useTimer } from '@/contexts/TimerContext'
-import { useAIChat } from '@/contexts/AIChatContext'
 import Character3D from '@/components/Character3D'
 import { formatTime } from '@/lib/utils'
 
@@ -15,11 +14,25 @@ const categories = [
 
 export default function StudyPage() {
   const { isRunning, isPaused, elapsedTime, category, startTimer, pauseTimer, resumeTimer, stopTimer, resetTimer } = useTimer()
-  const { messages, isLoading, sendMessage, clearMessages } = useAIChat()
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
-  const [messageInput, setMessageInput] = useState('')
   const [characterControls, setCharacterControls] = useState<any>(null)
-  const messagesEndRef = useRef<HTMLDivElement>(null)
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
+
+  useEffect(() => {
+    fetchAvatar()
+  }, [])
+
+  const fetchAvatar = async () => {
+    try {
+      const response = await fetch('/api/user/avatar')
+      if (response.ok) {
+        const data = await response.json()
+        setAvatarUrl(data.avatarUrl)
+      }
+    } catch (error) {
+      console.error('Error fetching avatar:', error)
+    }
+  }
 
   // Sync selectedCategory with timer category when restored
   useEffect(() => {
@@ -39,41 +52,53 @@ export default function StudyPage() {
   const handleRecordSession = async () => {
     try {
       await stopTimer()
-      alert('Study session saved!')
+      if (characterControls) {
+        characterControls.playCelebrate()
+      }
+      alert('Study session saved! 🎉')
     } catch (error) {
       alert('Failed to save session')
     }
   }
 
+  // Make character react to timer events
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages, isLoading])
-
-  const handleSendMessage = async () => {
-    if (!messageInput.trim()) return
-
-    await sendMessage(messageInput)
-    setMessageInput('')
-    if (characterControls) {
-      characterControls.playTalk()
+    if (!characterControls) return
+    
+    if (isRunning && !isPaused) {
+      // Character gets excited when timer starts
+      characterControls.playExcited()
+      setTimeout(() => {
+        if (characterControls) characterControls.playIdle()
+      }, 2000)
+    } else if (isPaused) {
+      // Character looks confused when paused
+      characterControls.playConfused()
     }
-    setTimeout(() => {
-      if (characterControls) {
-        characterControls.playIdle()
-      }
-    }, 2000)
-  }
+  }, [isRunning, isPaused, characterControls])
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100 mb-2">Study Timer</h1>
-        <p className="text-slate-600 dark:text-slate-400 font-medium">Track your study sessions and chat with your AI assistant</p>
+    <div className="relative min-h-[calc(100vh-8rem)] overflow-hidden">
+      {/* 3D Character Background - Positioned on left side */}
+      <div className="absolute left-0 bottom-0 w-1/2 h-full z-[1]">
+        <div className="absolute inset-0 flex items-end justify-start pl-4 md:pl-8 pb-4">
+          <div className="w-full h-full max-w-md flex items-end cursor-pointer relative z-[1]">
+            <Character3D
+              onCharacterReady={setCharacterControls}
+              isTalking={false}
+              scale={2.5}
+              avatarUrl={avatarUrl}
+            />
+          </div>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-6 border border-slate-200 dark:border-slate-700">
+      {/* Timer Section - Floating on the right side only */}
+      <div className="absolute right-0 top-0 bottom-0 w-1/2 z-10 flex justify-end items-start p-4 md:p-6 pointer-events-none">
+        <div className="w-full max-w-md bg-white/95 dark:bg-slate-800/95 backdrop-blur-xl rounded-2xl shadow-2xl p-6 border border-slate-200/50 dark:border-slate-700/50 pointer-events-auto">
           <div className="mb-6">
+            <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100 mb-2">Study Timer</h1>
+            <p className="text-slate-600 dark:text-slate-400 font-medium mb-4">Track your study sessions</p>
             <h2 className="text-xl font-bold mb-4 text-slate-900 dark:text-slate-100">Timer</h2>
             <div className="text-center mb-6 p-6 bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 dark:from-blue-950/30 dark:via-purple-950/30 dark:to-pink-950/30 rounded-2xl border border-blue-100 dark:border-blue-900/50">
               <div className="text-6xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent mb-2">
@@ -153,75 +178,6 @@ export default function StudyPage() {
                 </button>
               </div>
             )}
-          </div>
-
-          <div className="h-64 bg-slate-100 dark:bg-slate-900 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700">
-            <Character3D
-              onCharacterReady={setCharacterControls}
-              isTalking={isLoading}
-            />
-          </div>
-        </div>
-
-        <div id="chat-section" className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 flex flex-col border border-gray-200 dark:border-gray-700">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">AI Assistant</h2>
-            <button
-              onClick={clearMessages}
-              className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors"
-            >
-              Clear
-            </button>
-          </div>
-
-          <div className="flex-1 overflow-y-auto mb-4 space-y-4 min-h-[300px]">
-            {messages.length === 0 && (
-              <div className="text-center text-gray-500 dark:text-gray-400 py-8">
-                Start a conversation with your AI study assistant!
-              </div>
-            )}
-            {messages.map((message) => (
-              <div
-                key={message.id}
-                className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
-              >
-                <div
-                  className={`max-w-[80%] rounded-xl p-3 ${
-                    message.role === 'user'
-                      ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white'
-                      : 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100'
-                  }`}
-                >
-                  <p className="text-sm">{message.content}</p>
-                </div>
-              </div>
-            ))}
-            {isLoading && (
-              <div className="flex justify-start">
-                <div className="bg-gray-200 dark:bg-gray-700 rounded-xl p-3">
-                  <p className="text-sm text-gray-600 dark:text-gray-400">Thinking...</p>
-                </div>
-              </div>
-            )}
-            <div ref={messagesEndRef} />
-          </div>
-
-          <div className="flex gap-2">
-            <input
-              type="text"
-              value={messageInput}
-              onChange={(e) => setMessageInput(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-              placeholder="Ask me anything..."
-              className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
-            />
-            <button
-              onClick={handleSendMessage}
-              disabled={!messageInput.trim() || isLoading}
-              className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-2 rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed font-semibold shadow-lg"
-            >
-              Send
-            </button>
           </div>
         </div>
       </div>

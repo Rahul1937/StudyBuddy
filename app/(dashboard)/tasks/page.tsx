@@ -14,9 +14,19 @@ export default function TasksPage() {
   const [loading, setLoading] = useState(true)
   const [newTaskTitle, setNewTaskTitle] = useState('')
   const [isAdding, setIsAdding] = useState(false)
+  const [characterControls, setCharacterControls] = useState<any>(null)
 
   useEffect(() => {
     fetchTasks()
+  }, [])
+  
+  // Get character controls from CharacterBackground component via event
+  useEffect(() => {
+    const handleCharacterReady = (event: CustomEvent) => {
+      setCharacterControls(event.detail)
+    }
+    window.addEventListener('characterReady', handleCharacterReady as EventListener)
+    return () => window.removeEventListener('characterReady', handleCharacterReady as EventListener)
   }, [])
 
   const fetchTasks = async () => {
@@ -45,6 +55,11 @@ export default function TasksPage() {
       if (response.ok) {
         setNewTaskTitle('')
         fetchTasks()
+        
+        // Character gives thumbs up when task is added
+        if (characterControls?.playThumbsUp) {
+          characterControls.playThumbsUp()
+        }
       }
     } catch (error) {
       console.error('Error adding task:', error)
@@ -62,6 +77,11 @@ export default function TasksPage() {
         body: JSON.stringify({ status: newStatus }),
       })
       fetchTasks()
+      
+      // Character celebrates when task is completed
+      if (newStatus === 'completed' && characterControls?.playCelebrate) {
+        characterControls.playCelebrate()
+      }
     } catch (error) {
       console.error('Error updating task:', error)
     }

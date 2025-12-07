@@ -14,13 +14,30 @@ export function ChatWidget() {
   const router = useRouter()
   const pathname = usePathname()
   const [characterControls, setCharacterControls] = useState<any>(null)
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
+
+  useEffect(() => {
+    fetchAvatar()
+  }, [])
+
+  const fetchAvatar = async () => {
+    try {
+      const response = await fetch('/api/user/avatar')
+      if (response.ok) {
+        const data = await response.json()
+        setAvatarUrl(data.avatarUrl)
+      }
+    } catch (error) {
+      console.error('Error fetching avatar:', error)
+    }
+  }
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, isLoading])
 
-  // Hide widget on study page (chat is already available there)
-  if (pathname === '/study') {
+  // Hide widget on study and chat pages (chat is already available there)
+  if (pathname === '/study' || pathname === '/chat') {
     return null
   }
 
@@ -127,6 +144,7 @@ export function ChatWidget() {
             <Character3D
               onCharacterReady={setCharacterControls}
               isTalking={isLoading}
+              avatarUrl={avatarUrl}
             />
           </div>
 
