@@ -10,7 +10,6 @@ const navItems = [
   { href: '/tasks', label: 'Tasks', icon: '✅' },
   { href: '/notes', label: 'Notes', icon: '📝' },
   { href: '/chat', label: 'Chat with Agent', icon: '💬' },
-  { href: '/avatar', label: 'Customize Avatar', icon: '🎭' },
 ]
 
 export function Sidebar() {
