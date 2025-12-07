@@ -163,7 +163,7 @@ export default function AvatarPage() {
             {showManualInput && (
               <div className="mt-3 p-4 bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-200 dark:border-slate-700">
                 <p className="text-sm text-slate-600 dark:text-slate-400 mb-2">
-                  If automatic saving doesn't work, paste your ReadyPlayerMe avatar URL here:
+                  If automatic saving doesn&apos;t work, paste your ReadyPlayerMe avatar URL here:
                 </p>
                 <div className="flex gap-2">
                   <input
@@ -195,7 +195,7 @@ export default function AvatarPage() {
             <div className="flex-1">
               <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">How it works:</h3>
               <ol className="list-decimal list-inside space-y-1 text-sm text-slate-600 dark:text-slate-400">
-                <li>Customize your avatar's appearance, clothing, and style in the editor on the left</li>
+                <li>Customize your avatar&apos;s appearance, clothing, and style in the editor on the left</li>
                 <li>See a live preview of your avatar on the right as you customize</li>
                 <li>Click &quot;Export&quot; when you&apos;re happy with your avatar</li>
                 <li>Your avatar will automatically be saved and used throughout the app with all animations</li>
