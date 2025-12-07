@@ -1,15 +1,18 @@
-import { NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { NextResponse, NextRequest } from 'next/server'
+import { getToken } from 'next-auth/jwt'
 import { getGroqChatCompletion } from '@/lib/groq'
 import { prisma } from '@/lib/prisma'
 
 export const dynamic = 'force-dynamic'
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user?.id) {
+    const token = await getToken({ 
+      req: request, 
+      secret: process.env.NEXTAUTH_SECRET 
+    })
+    
+    if (!token?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -53,7 +56,7 @@ export async function POST(request: Request) {
         const taskTitle = taskMatch[1].trim()
         await prisma.task.create({
           data: {
-            userId: session.user.id,
+            userId: token.id as string,
             title: taskTitle,
             status: 'pending',
           },
@@ -71,7 +74,7 @@ export async function POST(request: Request) {
         const noteContent = noteMatch[1].trim()
         await prisma.note.create({
           data: {
-            userId: session.user.id,
+            userId: token.id as string,
             content: noteContent,
           },
         })
