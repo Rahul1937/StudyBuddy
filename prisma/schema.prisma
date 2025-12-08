@@ -38,9 +38,9 @@ model Session {
 }
 
 model User {
-  id            String    @id @default(cuid())
+  id            String         @id @default(cuid())
   name          String?
-  email         String    @unique
+  email         String         @unique
   emailVerified DateTime?
   image         String?
   password      String?
@@ -48,9 +48,10 @@ model User {
   sessions      Session[]
   studySessions StudySession[]
   tasks         Task[]
-  notes         Note[]
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  reminders     Reminder[]
+  categories    StudyCategory[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
 }
 
 model VerificationToken {
@@ -77,18 +78,33 @@ model Task {
   id        String   @id @default(cuid())
   userId    String
   title     String
-  status    String   @default("pending") // pending, completed
+  status    String   @default("todo") // todo, in-progress, done
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
-model Note {
+model Reminder {
+  id          String   @id @default(cuid())
+  userId      String
+  title       String
+  description String?  @db.Text
+  date        DateTime // Date and time for the reminder
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model StudyCategory {
   id        String   @id @default(cuid())
   userId    String
-  content   String   @db.Text
+  name      String
+  icon      String?  // Optional emoji icon
+  color     String?  // Optional color for UI
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@unique([userId, name]) // Prevent duplicate category names per user
 }
 

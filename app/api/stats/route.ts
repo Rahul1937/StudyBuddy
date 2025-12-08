@@ -18,8 +18,20 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url)
     const type = searchParams.get('type') || 'daily'
+    const dateParam = searchParams.get('date')
 
-    const { start, end } = getDateRange(type as 'daily' | 'weekly' | 'monthly')
+    let start: Date
+    let end: Date
+
+    if (type === 'all-time') {
+      start = new Date(0)
+      end = new Date()
+    } else {
+      const baseDate = dateParam ? new Date(dateParam) : new Date()
+      const range = getDateRange(type as 'daily' | 'weekly' | 'monthly', baseDate)
+      start = range.start
+      end = range.end
+    }
 
     const sessions = await prisma.studySession.findMany({
       where: {

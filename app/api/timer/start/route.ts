@@ -1,5 +1,6 @@
 import { NextResponse, NextRequest } from 'next/server'
 import { getToken } from 'next-auth/jwt'
+import { prisma } from '@/lib/prisma'
 
 export const dynamic = 'force-dynamic'
 
@@ -16,7 +17,19 @@ export async function POST(request: NextRequest) {
 
     const { category } = await request.json()
 
-    if (!category || !['revision', 'self-study', 'class', 'others'].includes(category)) {
+    if (!category) {
+      return NextResponse.json({ error: 'Category is required' }, { status: 400 })
+    }
+
+    // Verify category exists for this user
+    const categoryExists = await prisma.studyCategory.findFirst({
+      where: {
+        userId: token.id as string,
+        name: category,
+      },
+    })
+
+    if (!categoryExists) {
       return NextResponse.json({ error: 'Invalid category' }, { status: 400 })
     }
 

@@ -6,9 +6,10 @@ import { cn } from '@/lib/utils'
 
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: '📊' },
-  { href: '/study', label: 'Study', icon: '⏱️' },
+  { href: '/stats', label: 'Study Stats', icon: '📈' },
+  { href: '/study', label: 'Focus Session', icon: '⏱️' },
   { href: '/tasks', label: 'Tasks', icon: '✅' },
-  { href: '/notes', label: 'Notes', icon: '📝' },
+  { href: '/reminders', label: 'Reminders', icon: '📅' },
   { href: '/chat', label: 'Chat with Agent', icon: '💬' },
 ]
 

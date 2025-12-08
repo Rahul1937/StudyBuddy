@@ -15,14 +15,14 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const tasks = await prisma.task.findMany({
+    const reminders = await prisma.reminder.findMany({
       where: { userId: token.id as string },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { date: 'asc' },
     })
 
-    return NextResponse.json({ tasks })
+    return NextResponse.json({ reminders })
   } catch (error) {
-    console.error('Error fetching tasks:', error)
+    console.error('Error fetching reminders:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -38,23 +38,24 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { title, status } = await request.json()
+    const { title, description, date } = await request.json()
 
-    if (!title) {
-      return NextResponse.json({ error: 'Title is required' }, { status: 400 })
+    if (!title || !date) {
+      return NextResponse.json({ error: 'Title and date are required' }, { status: 400 })
     }
 
-    const task = await prisma.task.create({
+    const reminder = await prisma.reminder.create({
       data: {
         userId: token.id as string,
         title,
-        status: status || 'todo', // Updated to use new status system (todo/in-progress/done)
+        description: description || null,
+        date: new Date(date),
       },
     })
 
-    return NextResponse.json({ task })
+    return NextResponse.json({ reminder })
   } catch (error) {
-    console.error('Error creating task:', error)
+    console.error('Error creating reminder:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

@@ -15,14 +15,14 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const tasks = await prisma.task.findMany({
+    const categories = await prisma.studyCategory.findMany({
       where: { userId: token.id as string },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { createdAt: 'asc' },
     })
 
-    return NextResponse.json({ tasks })
+    return NextResponse.json({ categories })
   } catch (error) {
-    console.error('Error fetching tasks:', error)
+    console.error('Error fetching categories:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -38,23 +38,38 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { title, status } = await request.json()
+    const { name, icon, color } = await request.json()
 
-    if (!title) {
-      return NextResponse.json({ error: 'Title is required' }, { status: 400 })
+    if (!name || !name.trim()) {
+      return NextResponse.json({ error: 'Category name is required' }, { status: 400 })
     }
 
-    const task = await prisma.task.create({
-      data: {
-        userId: token.id as string,
-        title,
-        status: status || 'todo', // Updated to use new status system (todo/in-progress/done)
+    // Check if category with same name already exists for this user
+    const existing = await prisma.studyCategory.findUnique({
+      where: {
+        userId_name: {
+          userId: token.id as string,
+          name: name.trim(),
+        },
       },
     })
 
-    return NextResponse.json({ task })
+    if (existing) {
+      return NextResponse.json({ error: 'Category with this name already exists' }, { status: 400 })
+    }
+
+    const category = await prisma.studyCategory.create({
+      data: {
+        userId: token.id as string,
+        name: name.trim(),
+        icon: icon || '📝',
+        color: color || null,
+      },
+    })
+
+    return NextResponse.json({ category })
   } catch (error) {
-    console.error('Error creating task:', error)
+    console.error('Error creating category:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

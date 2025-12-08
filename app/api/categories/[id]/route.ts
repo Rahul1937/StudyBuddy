@@ -4,7 +4,10 @@ import { prisma } from '@/lib/prisma'
 
 export const dynamic = 'force-dynamic'
 
-export async function GET(request: NextRequest) {
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
   try {
     const token = await getToken({ 
       req: request, 
@@ -15,19 +18,31 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const tasks = await prisma.task.findMany({
-      where: { userId: token.id as string },
-      orderBy: { createdAt: 'desc' },
+    const { name, icon, color } = await request.json()
+
+    const category = await prisma.studyCategory.update({
+      where: {
+        id: params.id,
+        userId: token.id as string,
+      },
+      data: {
+        ...(name && { name: name.trim() }),
+        ...(icon !== undefined && { icon }),
+        ...(color !== undefined && { color }),
+      },
     })
 
-    return NextResponse.json({ tasks })
+    return NextResponse.json({ category })
   } catch (error) {
-    console.error('Error fetching tasks:', error)
+    console.error('Error updating category:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
 
-export async function POST(request: NextRequest) {
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
   try {
     const token = await getToken({ 
       req: request, 
@@ -38,23 +53,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { title, status } = await request.json()
-
-    if (!title) {
-      return NextResponse.json({ error: 'Title is required' }, { status: 400 })
-    }
-
-    const task = await prisma.task.create({
-      data: {
+    await prisma.studyCategory.delete({
+      where: {
+        id: params.id,
         userId: token.id as string,
-        title,
-        status: status || 'todo', // Updated to use new status system (todo/in-progress/done)
       },
     })
 
-    return NextResponse.json({ task })
+    return NextResponse.json({ success: true })
   } catch (error) {
-    console.error('Error creating task:', error)
+    console.error('Error deleting category:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

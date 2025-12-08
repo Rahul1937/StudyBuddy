@@ -35,9 +35,11 @@ export function middleware(request: NextRequest) {
     // Protect authenticated routes
     if (
       pathname.startsWith('/dashboard') ||
+      pathname.startsWith('/stats') ||
       pathname.startsWith('/study') ||
       pathname.startsWith('/tasks') ||
       pathname.startsWith('/notes') ||
+      pathname.startsWith('/reminders') ||
       pathname.startsWith('/chat')
     ) {
       if (!hasSession) {
