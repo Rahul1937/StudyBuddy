@@ -7,7 +7,7 @@ import { useAIChat } from '@/contexts/AIChatContext'
 export function ChatWidget() {
   const [isOpen, setIsOpen] = useState(false)
   const [isFullScreen, setIsFullScreen] = useState(false)
-  const { messages, isLoading, sendMessage, clearMessages } = useAIChat()
+  const { messages, isLoading, sendMessage } = useAIChat()
   const [messageInput, setMessageInput] = useState('')
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
