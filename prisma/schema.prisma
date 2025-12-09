@@ -38,19 +38,23 @@ model Session {
 }
 
 model User {
-  id            String    @id @default(cuid())
+  id            String         @id @default(cuid())
   name          String?
-  email         String    @unique
+  email         String         @unique
   emailVerified DateTime?
   image         String?
   password      String?
+  dailyGoal     Int?           @default(360) // Daily study goal in minutes (default 6 hours)
   accounts      Account[]
   sessions      Session[]
   studySessions StudySession[]
   tasks         Task[]
-  notes         Note[]
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  reminders     Reminder[]
+  categories    StudyCategory[]
+  folders       Folder[]
+  studyMaterials StudyMaterial[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
 }
 
 model VerificationToken {
@@ -77,18 +81,67 @@ model Task {
   id        String   @id @default(cuid())
   userId    String
   title     String
-  status    String   @default("pending") // pending, completed
+  status    String   @default("todo") // todo, in-progress, done
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
-model Note {
+model Reminder {
+  id          String   @id @default(cuid())
+  userId      String
+  title       String
+  description String?  @db.Text
+  date        DateTime // Date and time for the reminder
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model StudyCategory {
   id        String   @id @default(cuid())
   userId    String
-  content   String   @db.Text
+  name      String
+  icon      String?  // Optional emoji icon
+  color     String?  // Optional color for UI
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@unique([userId, name]) // Prevent duplicate category names per user
+}
+
+model Folder {
+  id          String         @id @default(cuid())
+  userId      String
+  name        String
+  parentId    String?        // For subfolder support
+  parent      Folder?        @relation("FolderHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
+  children    Folder[]       @relation("FolderHierarchy")
+  materials   StudyMaterial[]
+  user        User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  @@index([userId, parentId])
+}
+
+model StudyMaterial {
+  id          String   @id @default(cuid())
+  userId      String
+  folderId    String?  // null for root level
+  title       String
+  type        String   // "file" or "url"
+  fileUrl     String?  // For uploaded files
+  fileName    String?  // Original file name
+  fileSize    Int?     // File size in bytes
+  url         String?  // For saved URLs
+  description String?  @db.Text
+  folder      Folder?  @relation(fields: [folderId], references: [id], onDelete: SetNull)
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId, folderId])
 }
 
