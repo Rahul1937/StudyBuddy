@@ -3,9 +3,7 @@
  * Run with: npx tsx scripts/add-default-reminders.ts
  */
 
-import { PrismaClient } from '@prisma/client'
-
-const prisma = new PrismaClient()
+import { prisma } from '../lib/prisma'
 
 async function main() {
   console.log('Adding default UPSC reminders for all users...')
