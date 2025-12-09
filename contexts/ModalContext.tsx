@@ -21,13 +21,22 @@ interface ModalContextType {
 
 const ModalContext = createContext<ModalContextType | undefined>(undefined)
 
+type ModalState =
+  | {
+      isOpen: boolean
+      options: ModalOptions
+      type: 'alert'
+      resolve?: () => void
+    }
+  | {
+      isOpen: boolean
+      options: ModalOptions
+      type: 'confirm'
+      resolve?: (value: boolean) => void
+    }
+
 export function ModalProvider({ children }: { children: ReactNode }) {
-  const [modalState, setModalState] = useState<{
-    isOpen: boolean
-    options: ModalOptions
-    type: 'alert' | 'confirm'
-    resolve?: (value: boolean | void) => void
-  }>({
+  const [modalState, setModalState] = useState<ModalState>({
     isOpen: false,
     options: { title: '', message: '' },
     type: 'alert',
@@ -45,12 +54,12 @@ export function ModalProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const showConfirm = useCallback((options: ModalOptions): Promise<boolean> => {
-    return new Promise((resolve) => {
+    return new Promise<boolean>((resolve) => {
       setModalState({
         isOpen: true,
         options,
         type: 'confirm',
-        resolve: (confirmed: boolean) => resolve(confirmed),
+        resolve: resolve as (value: boolean) => void,
       })
     })
   }, [])
