@@ -193,7 +193,7 @@ export default function DashboardPage() {
           </div>
           {todayStudyTime >= dailyGoal && (
             <p className="text-xs text-emerald-600 dark:text-emerald-400 font-semibold mt-2 text-center">
-              🎉 Congratulations! You've reached your daily goal!
+              🎉 Congratulations! You&apos;ve reached your daily goal!
             </p>
           )}
         </div>
