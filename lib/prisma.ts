@@ -53,23 +53,33 @@ if (!globalForPrisma.prisma) {
 }
 
 // Handle graceful shutdown to properly close connections
+// Only set up listeners once to prevent memory leaks during hot reloads
 if (typeof process !== 'undefined') {
-  const disconnect = async () => {
-    try {
-      await prisma.$disconnect()
-    } catch (error) {
-      console.error('Error disconnecting Prisma:', error)
-    }
+  // Use a flag on the global object to track if listeners have been added
+  const globalForListeners = globalThis as unknown as {
+    __prismaListenersAdded?: boolean
   }
 
-  process.on('beforeExit', disconnect)
-  process.on('SIGINT', async () => {
-    await disconnect()
-    process.exit(0)
-  })
-  process.on('SIGTERM', async () => {
-    await disconnect()
-    process.exit(0)
-  })
+  if (!globalForListeners.__prismaListenersAdded) {
+    const disconnect = async () => {
+      try {
+        await prisma.$disconnect()
+      } catch (error) {
+        console.error('Error disconnecting Prisma:', error)
+      }
+    }
+
+    process.on('beforeExit', disconnect)
+    process.on('SIGINT', async () => {
+      await disconnect()
+      process.exit(0)
+    })
+    process.on('SIGTERM', async () => {
+      await disconnect()
+      process.exit(0)
+    })
+    
+    globalForListeners.__prismaListenersAdded = true
+  }
 }
 
