@@ -89,7 +89,7 @@ export default function DashboardPage() {
       end.setDate(end.getDate() + 1)
 
       const response = await fetch(
-        `/api/stats?type=daily&date=${today.toISOString()}`
+        `/api/stats?type=daily&date=${format(today, 'yyyy-MM-dd')}`
       )
       const data = await response.json()
       setTodayStudyTime(data.totalMinutes || 0)
