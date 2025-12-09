@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { useAIChat } from '@/contexts/AIChatContext'
+import { MarkdownMessage } from './MarkdownMessage'
 
 export function ChatWidget() {
   const [isOpen, setIsOpen] = useState(false)
@@ -126,7 +127,13 @@ export function ChatWidget() {
                       : 'bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-slate-700 shadow-sm'
                   }`}
                 >
-                  <p className="font-medium leading-relaxed">{message.content}</p>
+                  {message.role === 'user' ? (
+                    <p className="font-medium leading-relaxed whitespace-pre-wrap">{message.content}</p>
+                  ) : (
+                    <div className="font-medium">
+                      <MarkdownMessage content={message.content} isUser={false} />
+                    </div>
+                  )}
                 </div>
               </div>
             ))}
