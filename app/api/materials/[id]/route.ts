@@ -1,6 +1,7 @@
 import { NextResponse, NextRequest } from 'next/server'
 import { getToken } from 'next-auth/jwt'
 import { prisma } from '@/lib/prisma'
+import { del } from '@vercel/blob'
 
 export const dynamic = 'force-dynamic'
 
@@ -74,14 +75,25 @@ export async function DELETE(
       return NextResponse.json({ error: 'Material not found' }, { status: 404 })
     }
 
+    // Delete file from Vercel Blob Storage if it's a file type
+    if (material.type === 'file' && material.fileUrl) {
+      try {
+        // Vercel Blob URLs are full URLs (e.g., https://xxx.public.blob.vercel-storage.com/...)
+        // Only attempt deletion if it's a full URL (new uploads) or skip for old relative paths
+        if (material.fileUrl.startsWith('http://') || material.fileUrl.startsWith('https://')) {
+          await del(material.fileUrl, {
+            token: process.env.BLOB_READ_WRITE_TOKEN,
+          })
+        }
+      } catch (error) {
+        // Log error but don't fail the deletion if blob deletion fails
+        console.error('Error deleting file from blob storage:', error)
+      }
+    }
+
     await prisma.studyMaterial.delete({
       where: { id, userId: token.id as string },
     })
-
-    // TODO: Delete file from storage if it's a file type
-    // if (material.type === 'file' && material.fileUrl) {
-    //   // Delete file from storage
-    // }
 
     return NextResponse.json({ message: 'Material deleted successfully' })
   } catch (error) {

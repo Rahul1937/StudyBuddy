@@ -1,8 +1,6 @@
 import { NextResponse, NextRequest } from 'next/server'
 import { getToken } from 'next-auth/jwt'
-import { writeFile, mkdir } from 'fs/promises'
-import { join } from 'path'
-import { existsSync } from 'fs'
+import { put } from '@vercel/blob'
 
 export const dynamic = 'force-dynamic'
 
@@ -24,28 +22,20 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 })
     }
 
-    // Create uploads directory if it doesn't exist
-    const uploadsDir = join(process.cwd(), 'public', 'uploads', token.id as string)
-    if (!existsSync(uploadsDir)) {
-      await mkdir(uploadsDir, { recursive: true })
-    }
-
     // Generate unique filename
     const timestamp = Date.now()
     const sanitizedFileName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_')
     const fileName = `${timestamp}_${sanitizedFileName}`
-    const filePath = join(uploadsDir, fileName)
+    const blobPath = `uploads/${token.id}/${fileName}`
 
-    // Save file
-    const bytes = await file.arrayBuffer()
-    const buffer = Buffer.from(bytes)
-    await writeFile(filePath, buffer)
-
-    // Return file URL
-    const fileUrl = `/uploads/${token.id}/${fileName}`
+    // Upload to Vercel Blob Storage
+    const blob = await put(blobPath, file, {
+      access: 'public',
+      token: process.env.BLOB_READ_WRITE_TOKEN,
+    })
 
     return NextResponse.json({
-      fileUrl,
+      fileUrl: blob.url,
       fileName: file.name,
       fileSize: file.size,
     })
