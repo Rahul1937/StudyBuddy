@@ -104,7 +104,7 @@ export default function DashboardPage() {
       const weekStart = startOfWeek(today, { weekStartsOn: 0 })
       
       const response = await fetch(
-        `/api/stats?type=weekly&date=${weekStart.toISOString()}`
+        `/api/stats?type=weekly&date=${format(weekStart, 'yyyy-MM-dd')}`
       )
       const data = await response.json()
       setWeeklyStudyTime(data.totalMinutes || 0)
