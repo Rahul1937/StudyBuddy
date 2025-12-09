@@ -20,6 +20,7 @@ import {
   getWeek,
   startOfYear,
 } from 'date-fns'
+import { useModal } from '@/contexts/ModalContext'
 
 interface Reminder {
   id: string
@@ -33,6 +34,7 @@ interface Reminder {
 type ViewMode = 'month' | 'week'
 
 export default function RemindersPage() {
+  const { showAlert, showConfirm, showError, showWarning } = useModal()
   const [reminders, setReminders] = useState<Reminder[]>([])
   const [loading, setLoading] = useState(true)
   const [currentDate, setCurrentDate] = useState(new Date())
@@ -91,7 +93,7 @@ export default function RemindersPage() {
 
   const handleSaveReminder = async () => {
     if (!formData.title.trim() || !formData.date || !formData.time) {
-      alert('Please fill in all required fields')
+      await showWarning('Please fill in all required fields', 'Required Fields')
       return
     }
 
@@ -120,12 +122,17 @@ export default function RemindersPage() {
       }
     } catch (error) {
       console.error('Error saving reminder:', error)
-      alert('Failed to save reminder')
+      await showError('Failed to save reminder', 'Error')
     }
   }
 
   const handleDeleteReminder = async (reminderId: string) => {
-    if (!confirm('Are you sure you want to delete this reminder?')) return
+    const confirmed = await showConfirm({
+      title: 'Delete Reminder',
+      message: 'Are you sure you want to delete this reminder? This action cannot be undone.',
+      type: 'confirm',
+    })
+    if (!confirmed) return
 
     try {
       await fetch(`/api/reminders/${reminderId}`, {

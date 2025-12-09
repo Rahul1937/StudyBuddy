@@ -23,9 +23,14 @@ export default function DashboardPage() {
   const [tasks, setTasks] = useState<Task[]>([])
   const [reminders, setReminders] = useState<Reminder[]>([])
   const [loading, setLoading] = useState(true)
+  const [todayStudyTime, setTodayStudyTime] = useState(0) // in minutes
+  const [dailyGoal, setDailyGoal] = useState(120) // in minutes, default 2 hours
+  const [goalLoading, setGoalLoading] = useState(true)
 
   useEffect(() => {
     fetchAllData()
+    fetchTodayStudyTime()
+    fetchDailyGoal()
   }, [])
 
   const fetchAllData = async () => {
@@ -57,6 +62,37 @@ export default function DashboardPage() {
       setReminders(data.reminders || [])
     } catch (error) {
       console.error('Error fetching reminders:', error)
+    }
+  }
+
+  const fetchTodayStudyTime = async () => {
+    try {
+      const today = new Date()
+      const start = new Date(today)
+      start.setHours(0, 0, 0, 0)
+      const end = new Date(start)
+      end.setDate(end.getDate() + 1)
+
+      const response = await fetch(
+        `/api/stats?type=daily&date=${today.toISOString()}`
+      )
+      const data = await response.json()
+      setTodayStudyTime(data.totalMinutes || 0)
+    } catch (error) {
+      console.error('Error fetching today study time:', error)
+    }
+  }
+
+  const fetchDailyGoal = async () => {
+    setGoalLoading(true)
+    try {
+      const response = await fetch('/api/user/goal')
+      const data = await response.json()
+      setDailyGoal(data.dailyGoal || 120)
+    } catch (error) {
+      console.error('Error fetching daily goal:', error)
+    } finally {
+      setGoalLoading(false)
     }
   }
 
@@ -116,6 +152,52 @@ export default function DashboardPage() {
           <p className="text-slate-600 dark:text-slate-400 text-sm mt-0.5">Quick overview of your tasks and reminders for today</p>
         </div>
       </div>
+
+      {/* Daily Goal Tracker */}
+      {!goalLoading && (
+        <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-4 border border-slate-200 dark:border-slate-700">
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
+              <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">Daily Study Goal</h3>
+              <Link
+                href="/settings"
+                className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-semibold"
+              >
+                Edit →
+              </Link>
+            </div>
+            <div className="text-right">
+              <p className="text-lg font-bold text-slate-900 dark:text-slate-100">
+                {Math.round(todayStudyTime)} / {dailyGoal} min
+              </p>
+              <p className="text-xs text-slate-600 dark:text-slate-400">
+                {Math.round((todayStudyTime / dailyGoal) * 100)}% complete
+              </p>
+            </div>
+          </div>
+          <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-3 overflow-hidden">
+            <div
+              className={`h-full rounded-full transition-all duration-500 ${
+                todayStudyTime >= dailyGoal
+                  ? 'bg-gradient-to-r from-emerald-500 to-emerald-600'
+                  : todayStudyTime >= dailyGoal * 0.75
+                  ? 'bg-gradient-to-r from-blue-500 to-blue-600'
+                  : todayStudyTime >= dailyGoal * 0.5
+                  ? 'bg-gradient-to-r from-yellow-500 to-yellow-600'
+                  : 'bg-gradient-to-r from-red-500 to-red-600'
+              }`}
+              style={{
+                width: `${Math.min((todayStudyTime / dailyGoal) * 100, 100)}%`,
+              }}
+            />
+          </div>
+          {todayStudyTime >= dailyGoal && (
+            <p className="text-xs text-emerald-600 dark:text-emerald-400 font-semibold mt-2 text-center">
+              🎉 Congratulations! You've reached your daily goal!
+            </p>
+          )}
+        </div>
+      )}
 
       {/* Stats Grid */}
       {loading ? (

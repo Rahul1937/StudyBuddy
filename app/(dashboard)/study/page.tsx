@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useTimer } from '@/contexts/TimerContext'
+import { useModal } from '@/contexts/ModalContext'
 import { formatTime } from '@/lib/utils'
 
 interface StudyCategory {
@@ -13,6 +14,7 @@ interface StudyCategory {
 
 export default function StudyPage() {
   const { isRunning, isPaused, elapsedTime, category, startTimer, pauseTimer, resumeTimer, stopTimer, resetTimer } = useTimer()
+  const { showAlert, showConfirm, showSuccess, showError, showWarning } = useModal()
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   const [categories, setCategories] = useState<StudyCategory[]>([])
   const [loading, setLoading] = useState(true)
@@ -75,7 +77,7 @@ export default function StudyPage() {
 
   const handleAddCategory = async () => {
     if (!newCategoryName.trim()) {
-      alert('Please enter a category name')
+      await showWarning('Please enter a category name', 'Category Name Required')
       return
     }
 
@@ -97,18 +99,24 @@ export default function StudyPage() {
         fetchCategories()
       } else {
         const data = await response.json()
-        alert(data.error || 'Failed to create category')
+        await showError(data.error || 'Failed to create category', 'Error')
       }
     } catch (error) {
       console.error('Error adding category:', error)
-      alert('Failed to create category')
+      await showError('Failed to create category', 'Error')
     } finally {
       setIsAddingCategory(false)
     }
   }
 
   const handleDeleteCategory = async (categoryId: string) => {
-    if (!confirm('Are you sure you want to delete this category?')) return
+    const confirmed = await showConfirm({
+      title: 'Delete Category',
+      message: 'Are you sure you want to delete this category? This action cannot be undone.',
+      type: 'confirm',
+    })
+    
+    if (!confirmed) return
 
     try {
       const response = await fetch(`/api/categories/${categoryId}`, {
@@ -124,13 +132,13 @@ export default function StudyPage() {
       }
     } catch (error) {
       console.error('Error deleting category:', error)
-      alert('Failed to delete category')
+      await showError('Failed to delete category', 'Error')
     }
   }
 
   const handleStart = () => {
     if (!selectedCategory) {
-      alert('Please select a category')
+      showWarning('Please select a category', 'Category Required')
       return
     }
     startTimer(selectedCategory)
@@ -139,9 +147,9 @@ export default function StudyPage() {
   const handleRecordSession = async () => {
     try {
       await stopTimer()
-      alert('Study session saved! 🎉')
+      await showSuccess('Study session saved! 🎉', 'Success')
     } catch (error) {
-      alert('Failed to save session')
+      await showError('Failed to save session', 'Error')
     }
   }
 

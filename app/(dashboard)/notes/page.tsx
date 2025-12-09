@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { format } from 'date-fns'
+import { useModal } from '@/contexts/ModalContext'
 
 interface Note {
   id: string
@@ -11,6 +12,7 @@ interface Note {
 }
 
 export default function NotesPage() {
+  const { showConfirm } = useModal()
   const [notes, setNotes] = useState<Note[]>([])
   const [loading, setLoading] = useState(true)
   const [newNoteContent, setNewNoteContent] = useState('')
@@ -82,7 +84,12 @@ export default function NotesPage() {
   }
 
   const handleDeleteNote = async (noteId: string) => {
-    if (!confirm('Are you sure you want to delete this note?')) return
+    const confirmed = await showConfirm({
+      title: 'Delete Note',
+      message: 'Are you sure you want to delete this note? This action cannot be undone.',
+      type: 'confirm',
+    })
+    if (!confirmed) return
 
     try {
       await fetch(`/api/notes/${noteId}`, {

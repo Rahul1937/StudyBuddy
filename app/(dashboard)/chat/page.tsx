@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { useAIChat } from '@/contexts/AIChatContext'
+import { useModal } from '@/contexts/ModalContext'
 import { format } from 'date-fns'
 
 export default function ChatPage() {
@@ -15,6 +16,7 @@ export default function ChatPage() {
     selectConversation,
     deleteConversation,
   } = useAIChat()
+  const { showConfirm } = useModal()
   const [messageInput, setMessageInput] = useState('')
   const [showHistory, setShowHistory] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -41,9 +43,14 @@ export default function ChatPage() {
     setShowHistory(false)
   }
 
-  const handleDeleteConversation = (e: React.MouseEvent, conversationId: string) => {
+  const handleDeleteConversation = async (e: React.MouseEvent, conversationId: string) => {
     e.stopPropagation()
-    if (confirm('Are you sure you want to delete this conversation?')) {
+    const confirmed = await showConfirm({
+      title: 'Delete Conversation',
+      message: 'Are you sure you want to delete this conversation? This action cannot be undone.',
+      type: 'confirm',
+    })
+    if (confirmed) {
       deleteConversation(conversationId)
     }
   }

@@ -3,6 +3,7 @@
 import { useEffect, useState, useMemo } from 'react'
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd'
 import { format, isToday, isYesterday, isThisWeek, parseISO, startOfDay } from 'date-fns'
+import { useModal } from '@/contexts/ModalContext'
 
 interface Task {
   id: string
@@ -21,6 +22,7 @@ const columns: { id: ColumnId; title: string; color: string }[] = [
 ]
 
 export default function TasksPage() {
+  const { showConfirm } = useModal()
   const [tasks, setTasks] = useState<Task[]>([])
   const [loading, setLoading] = useState(true)
   const [newTaskTitle, setNewTaskTitle] = useState('')
@@ -94,7 +96,12 @@ export default function TasksPage() {
   }
 
   const handleDeleteTask = async (taskId: string) => {
-    if (!confirm('Are you sure you want to delete this task?')) return
+    const confirmed = await showConfirm({
+      title: 'Delete Task',
+      message: 'Are you sure you want to delete this task? This action cannot be undone.',
+      type: 'confirm',
+    })
+    if (!confirmed) return
 
     try {
       await fetch(`/api/tasks/${taskId}`, {

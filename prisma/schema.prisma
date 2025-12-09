@@ -44,6 +44,7 @@ model User {
   emailVerified DateTime?
   image         String?
   password      String?
+  dailyGoal     Int?           @default(360) // Daily study goal in minutes (default 6 hours)
   accounts      Account[]
   sessions      Session[]
   studySessions StudySession[]

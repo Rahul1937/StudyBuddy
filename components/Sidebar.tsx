@@ -12,6 +12,7 @@ const navItems = [
   { href: '/tasks', label: 'Tasks', icon: '✅' },
   { href: '/reminders', label: 'Reminders', icon: '📅' },
   { href: '/chat', label: 'Chat with Agent', icon: '💬' },
+  { href: '/settings', label: 'Settings', icon: '⚙️' },
 ]
 
 export const MobileMenuContext = createContext<{
