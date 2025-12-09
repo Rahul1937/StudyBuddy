@@ -182,7 +182,6 @@ export default function DashboardPage() {
     })
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
 
-
   return (
     <div className="space-y-4">
       {/* Header */}

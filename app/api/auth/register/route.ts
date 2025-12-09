@@ -41,6 +41,27 @@ export async function POST(request: Request) {
       },
     })
 
+    // Create default UPSC exam reminders
+    const prelimsDate = new Date('2026-05-24T09:00:00') // May 24, 2026 at 9 AM
+    const mainsDate = new Date('2026-08-21T09:00:00') // August 21, 2026 at 9 AM
+
+    await prisma.reminder.createMany({
+      data: [
+        {
+          userId: user.id,
+          title: 'UPSC Prelims Exam',
+          description: 'UPSC Civil Services Preliminary Examination',
+          date: prelimsDate,
+        },
+        {
+          userId: user.id,
+          title: 'UPSC Mains Exam',
+          description: 'UPSC Civil Services Main Examination',
+          date: mainsDate,
+        },
+      ],
+    })
+
     return NextResponse.json({
       success: true,
       user: { id: user.id, name: user.name, email: user.email },
