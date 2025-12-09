@@ -41,7 +41,8 @@ export function middleware(request: NextRequest) {
       pathname.startsWith('/notes') ||
       pathname.startsWith('/reminders') ||
       pathname.startsWith('/chat') ||
-      pathname.startsWith('/settings')
+      pathname.startsWith('/settings') ||
+      pathname.startsWith('/materials')
     ) {
       if (!hasSession) {
         return NextResponse.redirect(new URL('/login', request.url))

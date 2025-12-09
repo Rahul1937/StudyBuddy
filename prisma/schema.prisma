@@ -51,6 +51,8 @@ model User {
   tasks         Task[]
   reminders     Reminder[]
   categories    StudyCategory[]
+  folders       Folder[]
+  studyMaterials StudyMaterial[]
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
 }
@@ -107,5 +109,39 @@ model StudyCategory {
   updatedAt DateTime @updatedAt
 
   @@unique([userId, name]) // Prevent duplicate category names per user
+}
+
+model Folder {
+  id          String         @id @default(cuid())
+  userId      String
+  name        String
+  parentId    String?        // For subfolder support
+  parent      Folder?        @relation("FolderHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
+  children    Folder[]       @relation("FolderHierarchy")
+  materials   StudyMaterial[]
+  user        User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  @@index([userId, parentId])
+}
+
+model StudyMaterial {
+  id          String   @id @default(cuid())
+  userId      String
+  folderId    String?  // null for root level
+  title       String
+  type        String   // "file" or "url"
+  fileUrl     String?  // For uploaded files
+  fileName    String?  // Original file name
+  fileSize    Int?     // File size in bytes
+  url         String?  // For saved URLs
+  description String?  @db.Text
+  folder      Folder?  @relation(fields: [folderId], references: [id], onDelete: SetNull)
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId, folderId])
 }
 

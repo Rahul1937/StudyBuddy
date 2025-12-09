@@ -11,6 +11,7 @@ const navItems = [
   { href: '/study', label: 'Focus Session', icon: '⏱️' },
   { href: '/tasks', label: 'Tasks', icon: '✅' },
   { href: '/reminders', label: 'Reminders', icon: '📅' },
+  { href: '/materials', label: 'Study Materials', icon: '📁' },
   { href: '/chat', label: 'Chat with Agent', icon: '💬' },
   { href: '/settings', label: 'Settings', icon: '⚙️' },
 ]
