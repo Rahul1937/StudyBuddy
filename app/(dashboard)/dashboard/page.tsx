@@ -105,17 +105,6 @@ export default function DashboardPage() {
     })
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-slate-600 dark:text-slate-400 font-medium">Loading dashboard...</p>
-        </div>
-      </div>
-    )
-  }
-
   return (
     <div className="space-y-4">
       {/* Header */}
@@ -129,7 +118,21 @@ export default function DashboardPage() {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+      {loading ? (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="bg-white dark:bg-slate-800 rounded-lg p-3 border border-slate-200 dark:border-slate-700">
+              <div className="flex items-center justify-between mb-1.5">
+                <div className="bg-slate-200 dark:bg-slate-700 rounded h-3 w-20 animate-pulse" />
+                <div className="bg-slate-200 dark:bg-slate-700 rounded h-5 w-5 animate-pulse" />
+              </div>
+              <div className="bg-slate-200 dark:bg-slate-700 rounded h-8 w-16 mb-0.5 animate-pulse" />
+              <div className="bg-slate-200 dark:bg-slate-700 rounded h-2.5 w-24 animate-pulse" />
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         {/* Task Stats */}
         <div className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-950/30 dark:to-purple-900/20 rounded-lg p-3 border border-purple-200 dark:border-purple-900/50 shadow-md">
           <div className="flex items-center justify-between mb-1.5">
@@ -166,6 +169,7 @@ export default function DashboardPage() {
           </p>
         </div>
       </div>
+      )}
 
       {/* Main Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -181,8 +185,33 @@ export default function DashboardPage() {
             </Link>
           </div>
 
-          {/* Task Stats */}
-          <div className="grid grid-cols-3 gap-2 mb-3 flex-shrink-0">
+          {loading ? (
+            <>
+              {/* Task Stats Skeleton */}
+              <div className="grid grid-cols-3 gap-2 mb-3 flex-shrink-0">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="text-center p-2 bg-slate-50 dark:bg-slate-900/50 rounded-lg border border-slate-200 dark:border-slate-700">
+                    <div className="bg-slate-200 dark:bg-slate-700 rounded h-6 w-8 mx-auto mb-1 animate-pulse" />
+                    <div className="bg-slate-200 dark:bg-slate-700 rounded h-2.5 w-12 mx-auto animate-pulse" />
+                  </div>
+                ))}
+              </div>
+              {/* Tasks List Skeleton */}
+              <div className="space-y-1.5 flex-1 overflow-y-auto min-h-0">
+                {[1, 2, 3, 4, 5].map((i) => (
+                  <div key={i} className="p-2 bg-slate-50 dark:bg-slate-900/50 rounded-lg border border-slate-200 dark:border-slate-700 flex-shrink-0">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="bg-slate-200 dark:bg-slate-700 rounded h-3 flex-1 animate-pulse" />
+                      <div className="bg-slate-200 dark:bg-slate-700 rounded h-4 w-16 animate-pulse" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
+          ) : (
+            <>
+              {/* Task Stats */}
+              <div className="grid grid-cols-3 gap-2 mb-3 flex-shrink-0">
             <div className="text-center p-2 bg-slate-50 dark:bg-slate-900/50 rounded-lg border border-slate-200 dark:border-slate-700">
               <p className="text-xl font-bold text-slate-900 dark:text-slate-100">{taskStats.todo}</p>
               <p className="text-[10px] text-slate-600 dark:text-slate-400 font-medium mt-0.5">To Do</p>
@@ -230,6 +259,8 @@ export default function DashboardPage() {
               </div>
             )}
           </div>
+            </>
+          )}
         </div>
 
         {/* Reminders Panel */}
@@ -244,7 +275,20 @@ export default function DashboardPage() {
             </Link>
           </div>
 
-          <div className="space-y-1.5 flex-1 overflow-y-auto min-h-0">
+          {loading ? (
+            <div className="space-y-1.5 flex-1 overflow-y-auto min-h-0">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="p-2 rounded-lg border border-slate-200 dark:border-slate-700 flex-shrink-0 bg-slate-50 dark:bg-slate-900/50">
+                  <div className="flex items-center justify-between gap-1.5 mb-0.5">
+                    <div className="bg-slate-200 dark:bg-slate-700 rounded h-3 flex-1 animate-pulse" />
+                    <div className="bg-slate-200 dark:bg-slate-700 rounded h-4 w-12 animate-pulse" />
+                  </div>
+                  <div className="bg-slate-200 dark:bg-slate-700 rounded h-2 w-32 mt-1 animate-pulse" />
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="space-y-1.5 flex-1 overflow-y-auto min-h-0">
             {remindersForDate.length > 0 ? (
               remindersForDate.map((reminder) => {
                 const reminderDate = parseISO(reminder.date)
@@ -293,6 +337,7 @@ export default function DashboardPage() {
               </div>
             )}
           </div>
+          )}
         </div>
       </div>
     </div>

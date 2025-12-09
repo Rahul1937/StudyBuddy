@@ -177,17 +177,6 @@ export default function TasksPage() {
       }))
   }, [tasksToDisplay])
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-slate-600 dark:text-slate-400 font-medium">Loading tasks...</p>
-        </div>
-      </div>
-    )
-  }
-
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-3">
@@ -197,7 +186,17 @@ export default function TasksPage() {
         </div>
         
         {/* Filters */}
-        <div className="flex items-center gap-2 flex-wrap">
+        {loading ? (
+          <div className="flex items-center gap-2 flex-wrap">
+            <div className="bg-slate-200 dark:bg-slate-700 rounded-lg h-8 w-32 animate-pulse" />
+            <div className="flex items-center gap-1.5">
+              <div className="bg-slate-200 dark:bg-slate-700 rounded h-5 w-20 animate-pulse" />
+              <div className="bg-slate-200 dark:bg-slate-700 rounded-full h-5 w-9 animate-pulse" />
+              <div className="bg-slate-200 dark:bg-slate-700 rounded h-3 w-8 animate-pulse" />
+            </div>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2 flex-wrap">
           {/* Date Filter */}
           {availableDates.length > 0 && (
             <select
@@ -237,32 +236,57 @@ export default function TasksPage() {
               ({completedTasks.length})
             </span>
           </div>
-        </div>
+          </div>
+        )}
       </div>
 
       {/* Add Task Input and Task Statistics - Enhanced Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+      {loading ? (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+          <div className="lg:col-span-2 bg-white dark:bg-slate-800 rounded-lg shadow-md p-4 border border-slate-200 dark:border-slate-700">
+            <div className="flex gap-2 mb-3">
+              <div className="flex-1 bg-slate-200 dark:bg-slate-700 rounded-lg h-9 animate-pulse" />
+              <div className="bg-slate-200 dark:bg-slate-700 rounded-lg h-9 w-24 animate-pulse" />
+            </div>
+            <div className="flex items-center gap-1.5 flex-wrap pt-1">
+              <div className="bg-slate-200 dark:bg-slate-700 rounded h-4 w-16 animate-pulse" />
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="bg-slate-200 dark:bg-slate-700 rounded-lg h-6 w-24 animate-pulse" />
+              ))}
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-2 lg:col-span-1">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-2 border border-slate-200 dark:border-slate-700 text-center">
+                <div className="bg-slate-200 dark:bg-slate-700 rounded h-2.5 w-12 mx-auto mb-0.5 animate-pulse" />
+                <div className="bg-slate-200 dark:bg-slate-700 rounded h-5 w-8 mx-auto animate-pulse" />
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
         {/* Add Task Input - Enhanced with Quick Actions */}
         <div className="lg:col-span-2 bg-white dark:bg-slate-800 rounded-lg shadow-md p-4 border border-slate-200 dark:border-slate-700">
           <div className="space-y-3">
             {/* Main Input Section */}
             <div className="flex gap-2">
-              <input
-                type="text"
-                value={newTaskTitle}
-                onChange={(e) => setNewTaskTitle(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleAddTask()}
-                placeholder="Add a new task..."
+          <input
+            type="text"
+            value={newTaskTitle}
+            onChange={(e) => setNewTaskTitle(e.target.value)}
+            onKeyPress={(e) => e.key === 'Enter' && handleAddTask()}
+            placeholder="Add a new task..."
                 className="flex-1 px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 placeholder-slate-500 dark:placeholder-slate-400 text-sm font-medium"
-              />
-              <button
-                onClick={handleAddTask}
-                disabled={!newTaskTitle.trim() || isAdding}
+          />
+          <button
+            onClick={handleAddTask}
+            disabled={!newTaskTitle.trim() || isAdding}
                 className="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 text-white px-4 py-2 rounded-lg hover:from-blue-700 hover:via-purple-700 hover:to-pink-700 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed font-semibold text-sm shadow-md disabled:shadow-none"
-              >
+          >
                 {isAdding ? 'Adding...' : 'Add Task'}
-              </button>
-            </div>
+          </button>
+        </div>
 
             {/* Quick Task Templates */}
             <div className="flex items-center gap-1.5 flex-wrap pt-1">
@@ -308,17 +332,43 @@ export default function TasksPage() {
           </div>
         </div>
       </div>
+      )}
 
       {/* Kanban Board */}
-      <DragDropContext onDragEnd={handleDragEnd}>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+      {loading ? (
+        <div className="overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0">
+          <div className="flex gap-3 min-w-max md:grid md:grid-cols-3 md:min-w-0">
+            {[1, 2, 3].map((col) => (
+              <div key={col} className="bg-white dark:bg-slate-800 rounded-lg shadow-md border border-slate-200 dark:border-slate-700 flex flex-col w-80 md:w-auto" style={{ minHeight: '450px' }}>
+                <div className="px-3 py-2 rounded-t-lg border-b border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800">
+                  <div className="flex items-center justify-between">
+                    <div className="bg-slate-200 dark:bg-slate-700 rounded h-4 w-20 animate-pulse" />
+                    <div className="bg-slate-200 dark:bg-slate-700 rounded-full h-5 w-6 animate-pulse" />
+                  </div>
+                </div>
+                <div className="flex-1 p-2 space-y-2">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="p-2.5 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700">
+                      <div className="bg-slate-200 dark:bg-slate-700 rounded h-4 w-full mb-1.5 animate-pulse" />
+                      <div className="bg-slate-200 dark:bg-slate-700 rounded h-2 w-24 animate-pulse" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : (
+        <DragDropContext onDragEnd={handleDragEnd}>
+        <div className="overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0">
+          <div className="flex gap-3 min-w-max md:grid md:grid-cols-3 md:min-w-0">
           {columns.map((column) => {
             const columnTasks = getTasksByStatus(column.id)
 
             return (
               <div
                 key={column.id}
-                className="bg-white dark:bg-slate-800 rounded-lg shadow-md border border-slate-200 dark:border-slate-700 flex flex-col"
+                className="bg-white dark:bg-slate-800 rounded-lg shadow-md border border-slate-200 dark:border-slate-700 flex flex-col w-80 md:w-auto"
                 style={{ minHeight: '450px' }}
               >
                 {/* Column Header */}
@@ -326,7 +376,7 @@ export default function TasksPage() {
                   <div className="flex items-center justify-between">
                     <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">
                       {column.title}
-                    </h2>
+            </h2>
                     <span className="bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-semibold px-2 py-0.5 rounded-full">
                       {columnTasks.length}
                     </span>
@@ -436,13 +486,15 @@ export default function TasksPage() {
               </div>
             )
           })}
+          </div>
         </div>
       </DragDropContext>
+      )}
 
       {/* Completed Tasks History (Collapsible) */}
       {completedTasks.length > 0 && !showCompleted && (
         <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-3 border border-slate-200 dark:border-slate-700">
-          <button
+                    <button
             onClick={() => setShowCompleted(true)}
             className="w-full text-left flex items-center justify-between text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 transition-colors"
           >
@@ -462,7 +514,7 @@ export default function TasksPage() {
                 d="M19 9l-7 7-7-7"
               />
             </svg>
-          </button>
+                    </button>
         </div>
       )}
     </div>

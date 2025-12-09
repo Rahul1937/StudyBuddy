@@ -169,17 +169,6 @@ export default function StatsPage() {
   const chartData = view === 'day' ? getHourlyData() : view === 'week' ? getWeeklyData() : getMonthlyData()
   const maxValue = Math.max(...chartData.map(d => d.minutes), 1)
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-slate-600 dark:text-slate-400 font-medium">Loading stats...</p>
-        </div>
-      </div>
-    )
-  }
-
   return (
     <div className="space-y-4">
       {/* Header with Navigation */}
@@ -210,7 +199,14 @@ export default function StatsPage() {
       </div>
 
       {/* Date Navigation */}
-      <div className="flex items-center justify-between bg-white dark:bg-slate-800 rounded-lg p-3 border border-slate-200 dark:border-slate-700 shadow-sm">
+      {loading ? (
+        <div className="flex items-center justify-between bg-white dark:bg-slate-800 rounded-lg p-3 border border-slate-200 dark:border-slate-700 shadow-sm">
+          <div className="bg-slate-200 dark:bg-slate-700 rounded-lg h-8 w-8 animate-pulse" />
+          <div className="bg-slate-200 dark:bg-slate-700 rounded h-5 w-48 animate-pulse" />
+          <div className="bg-slate-200 dark:bg-slate-700 rounded-lg h-8 w-8 animate-pulse" />
+        </div>
+      ) : (
+        <div className="flex items-center justify-between bg-white dark:bg-slate-800 rounded-lg p-3 border border-slate-200 dark:border-slate-700 shadow-sm">
         <button
           onClick={handlePrevious}
           className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
@@ -221,7 +217,7 @@ export default function StatsPage() {
           </svg>
         </button>
         <div className="text-center">
-          <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">
+          <h2 className="text-sm sm:text-lg font-bold text-slate-900 dark:text-slate-100">
             {view === 'day'
               ? format(currentDate, 'EEEE, MMMM d, yyyy')
               : view === 'week'
@@ -247,9 +243,24 @@ export default function StatsPage() {
           </svg>
         </button>
       </div>
+      )}
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      {loading ? (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950/30 dark:to-blue-900/20 rounded-lg p-3 border border-blue-200 dark:border-blue-900/50 shadow-md">
+              <div className="flex items-center justify-between mb-1.5">
+                <div className="bg-slate-200 dark:bg-slate-700 rounded h-2.5 w-16 animate-pulse" />
+                <div className="bg-slate-200 dark:bg-slate-700 rounded h-4 w-4 animate-pulse" />
+              </div>
+              <div className="bg-slate-200 dark:bg-slate-700 rounded h-7 w-20 mb-0.5 animate-pulse" />
+              <div className="bg-slate-200 dark:bg-slate-700 rounded h-2 w-16 animate-pulse" />
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <div className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950/30 dark:to-blue-900/20 rounded-lg p-3 border border-blue-200 dark:border-blue-900/50 shadow-md">
           <div className="flex items-center justify-between mb-1.5">
             <h3 className="text-xs font-semibold text-blue-700 dark:text-blue-300 uppercase tracking-wide">Total Time</h3>
@@ -306,9 +317,30 @@ export default function StatsPage() {
           </p>
         </div>
       </div>
+      )}
 
       {/* Main Chart */}
-      <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-4 border border-slate-200 dark:border-slate-700">
+      {loading ? (
+        <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-4 border border-slate-200 dark:border-slate-700">
+          <div className="flex items-center justify-between mb-4">
+            <div className="bg-slate-200 dark:bg-slate-700 rounded h-5 w-32 animate-pulse" />
+            <div className="bg-slate-200 dark:bg-slate-700 rounded h-3 w-24 animate-pulse" />
+          </div>
+          <div className="h-[240px] bg-slate-100 dark:bg-slate-900/50 rounded-lg flex items-end justify-around gap-1 p-4">
+            {Array.from({ length: 12 }).map((_, i) => (
+              <div
+                key={i}
+                className="bg-slate-200 dark:bg-slate-700 rounded-t animate-pulse"
+                style={{
+                  width: '8%',
+                  height: `${20 + Math.random() * 60}%`,
+                }}
+              />
+            ))}
+          </div>
+        </div>
+      ) : (
+        <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-4 border border-slate-200 dark:border-slate-700">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">
             {view === 'day' ? 'Hourly Study Time' : view === 'week' ? 'Daily Study Time' : 'Daily Study Time'}
@@ -320,7 +352,7 @@ export default function StatsPage() {
             Start Study Session →
           </Link>
         </div>
-        <ResponsiveContainer width="100%" height={view === 'day' ? 240 : view === 'week' ? 200 : 320}>
+        <ResponsiveContainer width="100%" height={view === 'day' ? 200 : view === 'week' ? 180 : 280}>
           <BarChart 
             data={chartData} 
             margin={{ top: 10, right: 10, left: 0, bottom: 10 }}
@@ -386,13 +418,40 @@ export default function StatsPage() {
           </BarChart>
         </ResponsiveContainer>
       </div>
+      )}
 
       {/* Category Breakdown */}
-      {categoryData.length > 0 && (
+      {loading ? (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-4 border border-slate-200 dark:border-slate-700">
+            <div className="bg-slate-200 dark:bg-slate-700 rounded h-5 w-32 mb-4 animate-pulse" />
+            <div className="h-[240px] bg-slate-100 dark:bg-slate-900/50 rounded-lg flex items-center justify-center">
+              <div className="bg-slate-200 dark:bg-slate-700 rounded-full h-32 w-32 animate-pulse" />
+            </div>
+          </div>
+          <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-4 border border-slate-200 dark:border-slate-700">
+            <div className="bg-slate-200 dark:bg-slate-700 rounded h-5 w-32 mb-4 animate-pulse" />
+            <div className="space-y-3">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="bg-slate-200 dark:bg-slate-700 rounded-full h-4 w-4 animate-pulse" />
+                      <div className="bg-slate-200 dark:bg-slate-700 rounded h-3 w-24 animate-pulse" />
+                    </div>
+                    <div className="bg-slate-200 dark:bg-slate-700 rounded h-3 w-12 animate-pulse" />
+                  </div>
+                  <div className="bg-slate-200 dark:bg-slate-700 rounded-full h-2 w-full animate-pulse" />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      ) : categoryData.length > 0 && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-4 border border-slate-200 dark:border-slate-700">
             <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100 mb-4">Category Breakdown</h2>
-            <ResponsiveContainer width="100%" height={240}>
+            <ResponsiveContainer width="100%" height={200}>
               <PieChart>
                 <Pie
                   data={categoryData}

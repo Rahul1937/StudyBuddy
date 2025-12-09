@@ -147,17 +147,6 @@ export default function StudyPage() {
 
   const commonIcons = ['📚', '📖', '🎓', '✏️', '📝', '💻', '🔬', '📊', '📋', '🎯', '⚡', '🌟']
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-slate-600 dark:text-slate-400 font-medium">Loading categories...</p>
-        </div>
-      </div>
-    )
-  }
-
   return (
     <div className="max-w-4xl mx-auto">
       <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-4 border border-slate-200 dark:border-slate-700">
@@ -166,7 +155,7 @@ export default function StudyPage() {
             <p className="text-slate-600 dark:text-slate-400 text-sm mb-3">Track your study sessions</p>
             <h2 className="text-lg font-bold mb-3 text-slate-900 dark:text-slate-100">Timer</h2>
             <div className="text-center mb-4 p-4 bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 dark:from-blue-950/30 dark:via-purple-950/30 dark:to-pink-950/30 rounded-lg border border-blue-100 dark:border-blue-900/50">
-              <div className="text-5xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent mb-1.5">
+              <div className="text-4xl sm:text-5xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent mb-1.5">
                 {formatTime(elapsedTime)}
               </div>
               {category && (
@@ -196,6 +185,18 @@ export default function StudyPage() {
                       <span>Add Category</span>
                     </button>
                   </div>
+
+                  {loading ? (
+                    <div className="grid grid-cols-2 gap-2">
+                      {[1, 2, 3, 4].map((i) => (
+                        <div key={i} className="p-3 rounded-lg border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800">
+                          <div className="bg-slate-200 dark:bg-slate-700 rounded h-6 w-6 mb-1 animate-pulse" />
+                          <div className="bg-slate-200 dark:bg-slate-700 rounded h-3 w-20 animate-pulse" />
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <>
 
                   {/* Add Category Form */}
                   {showAddCategory && (
@@ -265,41 +266,43 @@ export default function StudyPage() {
                     </div>
                   )}
 
-                  {/* Categories Grid */}
-                  {categories.length > 0 ? (
-                    <div className="grid grid-cols-2 gap-2">
-                      {categories.map((cat) => (
-                        <div
-                          key={cat.id}
-                          className="relative group"
-                        >
-                          <button
-                            onClick={() => setSelectedCategory(cat.name)}
-                            className={`w-full p-3 rounded-lg border-2 transition-all duration-200 ${
-                              selectedCategory === cat.name
-                                ? 'border-blue-600 dark:border-blue-400 bg-blue-50 dark:bg-blue-950/50 shadow-md scale-105 ring-2 ring-blue-200 dark:ring-blue-900'
-                                : 'border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 bg-white dark:bg-slate-800 hover:shadow-md'
-                            }`}
-                          >
-                            <div className="text-xl mb-0.5">{cat.icon || '📝'}</div>
-                            <div className="text-xs font-semibold text-slate-900 dark:text-slate-100">{cat.name}</div>
-                          </button>
-                          <button
-                            onClick={() => handleDeleteCategory(cat.id)}
-                            className="absolute top-1.5 right-1.5 opacity-0 group-hover:opacity-100 p-1 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-opacity text-[10px]"
-                            title="Delete category"
-                          >
-                            <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                          </button>
+                      {/* Categories Grid */}
+                      {categories.length > 0 ? (
+                        <div className="grid grid-cols-2 sm:grid-cols-2 gap-2">
+                          {categories.map((cat) => (
+                            <div
+                              key={cat.id}
+                              className="relative group"
+                            >
+                              <button
+                                onClick={() => setSelectedCategory(cat.name)}
+                                className={`w-full p-3 rounded-lg border-2 transition-all duration-200 ${
+                                  selectedCategory === cat.name
+                                    ? 'border-blue-600 dark:border-blue-400 bg-blue-50 dark:bg-blue-950/50 shadow-md scale-105 ring-2 ring-blue-200 dark:ring-blue-900'
+                                    : 'border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 bg-white dark:bg-slate-800 hover:shadow-md'
+                                }`}
+                              >
+                                <div className="text-xl mb-0.5">{cat.icon || '📝'}</div>
+                                <div className="text-xs font-semibold text-slate-900 dark:text-slate-100">{cat.name}</div>
+                              </button>
+                              <button
+                                onClick={() => handleDeleteCategory(cat.id)}
+                                className="absolute top-1.5 right-1.5 opacity-0 group-hover:opacity-100 p-1 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-opacity text-[10px]"
+                                title="Delete category"
+                              >
+                                <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                              </button>
+                            </div>
+                          ))}
                         </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="text-center py-6 text-slate-500 dark:text-slate-400">
-                      <p className="text-xs mb-1">No categories yet. Click &quot;Add Category&quot; to create one!</p>
-                    </div>
+                      ) : (
+                        <div className="text-center py-6 text-slate-500 dark:text-slate-400">
+                          <p className="text-xs mb-1">No categories yet. Click &quot;Add Category&quot; to create one!</p>
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
                 <button

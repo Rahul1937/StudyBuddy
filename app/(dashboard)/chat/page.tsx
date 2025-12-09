@@ -54,21 +54,32 @@ export default function ChatPage() {
   )
 
   return (
-    <div className="flex h-[calc(100vh-8rem)] gap-3">
+    <div className="flex h-[calc(100vh-8rem)] gap-2 sm:gap-3 relative">
+      {/* Mobile Overlay */}
+      {showHistory && (
+        <div
+          className="fixed top-[73px] left-0 right-0 bottom-0 bg-black/50 z-40 sm:hidden"
+          onClick={() => setShowHistory(false)}
+        />
+      )}
+
       {/* Conversation History Sidebar */}
       <div
         className={`${
-          showHistory ? 'w-64' : 'w-0'
-        } transition-all duration-300 overflow-hidden bg-white dark:bg-slate-800 rounded-lg shadow-md border border-slate-200 dark:border-slate-700 flex flex-col`}
+          showHistory
+            ? 'fixed sm:relative left-0 top-[73px] sm:top-auto w-[280px] sm:w-64 h-[calc(100vh-73px)] sm:h-auto z-50 sm:z-auto'
+            : 'w-0'
+        } transition-all duration-300 overflow-hidden bg-white dark:bg-slate-800 rounded-lg sm:rounded-lg shadow-xl sm:shadow-md border border-slate-200 dark:border-slate-700 flex flex-col`}
       >
-        <div className="p-3 border-b border-slate-200 dark:border-slate-700">
+        <div className="p-3 border-b border-slate-200 dark:border-slate-700 flex-shrink-0">
           <div className="flex items-center justify-between mb-2">
             <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">Conversations</h3>
             <button
               onClick={() => setShowHistory(false)}
-              className="text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+              className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 transition-colors"
+              aria-label="Close conversations"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>

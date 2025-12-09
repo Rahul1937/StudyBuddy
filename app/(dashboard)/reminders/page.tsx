@@ -252,7 +252,32 @@ export default function RemindersPage() {
       </div>
 
       {/* Calendar */}
-      <div className="flex-1 bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700 overflow-hidden">
+      {loading ? (
+        <div className="flex-1 bg-white dark:bg-slate-800 rounded-lg shadow-md border border-slate-200 dark:border-slate-700 overflow-hidden">
+          <div className="h-full flex flex-col">
+            <div className="grid grid-cols-7 border-b border-slate-200 dark:border-slate-700">
+              {[1, 2, 3, 4, 5, 6, 7].map((i) => (
+                <div key={i} className="p-2 text-center">
+                  <div className="bg-slate-200 dark:bg-slate-700 rounded h-3 w-8 mx-auto animate-pulse" />
+                </div>
+              ))}
+            </div>
+            <div className="flex-1 grid grid-cols-7 auto-rows-fr">
+              {Array.from({ length: 35 }).map((_, i) => (
+                <div key={i} className="min-h-[80px] sm:min-h-[100px] p-1 sm:p-1.5 border-r border-b border-slate-200 dark:border-slate-700">
+                  <div className="bg-slate-200 dark:bg-slate-700 rounded h-3 w-3 sm:h-4 sm:w-4 mb-0.5 sm:mb-1 animate-pulse" />
+                  <div className="space-y-0.5">
+                    {[1, 2].map((j) => (
+                      <div key={j} className="bg-slate-200 dark:bg-slate-700 rounded h-2 sm:h-3 w-full animate-pulse" />
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="flex-1 bg-white dark:bg-slate-800 rounded-lg shadow-md border border-slate-200 dark:border-slate-700 overflow-hidden">
         {viewMode === 'month' ? (
           <div className="h-full flex flex-col">
             {/* Day Headers */}
@@ -278,7 +303,7 @@ export default function RemindersPage() {
                   <div
                     key={idx}
                     onClick={() => handleDateClick(day)}
-                    className={`min-h-[100px] p-1.5 border-r border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-900/50 transition-colors ${
+                    className={`min-h-[80px] sm:min-h-[100px] p-1 sm:p-1.5 border-r border-b border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-900/50 transition-colors ${
                       !isCurrentMonth ? 'bg-slate-50/50 dark:bg-slate-900/30 opacity-60' : ''
                     } ${isCurrentDay ? 'ring-2 ring-blue-500 dark:ring-blue-400' : ''}`}
                   >
@@ -414,6 +439,7 @@ export default function RemindersPage() {
           </div>
         )}
       </div>
+      )}
 
       {/* Add/Edit Reminder Modal */}
       {showModal && (
