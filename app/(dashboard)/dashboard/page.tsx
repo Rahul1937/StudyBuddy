@@ -1,8 +1,10 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { format, isToday, isTomorrow, parseISO } from 'date-fns'
+import { format, isToday, isTomorrow, parseISO, startOfWeek, endOfWeek } from 'date-fns'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { formatDuration } from '@/lib/utils'
 
 interface Task {
   id: string
@@ -19,17 +21,30 @@ interface Reminder {
   date: string
 }
 
+interface StudySession {
+  id: string
+  category: string
+  startTime: string
+  endTime: string | null
+  duration: number | null
+}
+
 export default function DashboardPage() {
+  const router = useRouter()
   const [tasks, setTasks] = useState<Task[]>([])
   const [reminders, setReminders] = useState<Reminder[]>([])
   const [loading, setLoading] = useState(true)
   const [todayStudyTime, setTodayStudyTime] = useState(0) // in minutes
+  const [weeklyStudyTime, setWeeklyStudyTime] = useState(0) // in minutes
   const [dailyGoal, setDailyGoal] = useState(120) // in minutes, default 2 hours
   const [goalLoading, setGoalLoading] = useState(true)
+  const [recentSessions, setRecentSessions] = useState<StudySession[]>([])
 
   useEffect(() => {
     fetchAllData()
     fetchTodayStudyTime()
+    fetchWeeklyStudyTime()
+    fetchRecentSessions()
     fetchDailyGoal()
   }, [])
 
@@ -80,6 +95,32 @@ export default function DashboardPage() {
       setTodayStudyTime(data.totalMinutes || 0)
     } catch (error) {
       console.error('Error fetching today study time:', error)
+    }
+  }
+
+  const fetchWeeklyStudyTime = async () => {
+    try {
+      const today = new Date()
+      const weekStart = startOfWeek(today, { weekStartsOn: 0 })
+      
+      const response = await fetch(
+        `/api/stats?type=weekly&date=${weekStart.toISOString()}`
+      )
+      const data = await response.json()
+      setWeeklyStudyTime(data.totalMinutes || 0)
+    } catch (error) {
+      console.error('Error fetching weekly study time:', error)
+    }
+  }
+
+  const fetchRecentSessions = async () => {
+    try {
+      const response = await fetch('/api/stats?type=all-time')
+      const data = await response.json()
+      const sessions = (data.sessions || []).slice(0, 5) // Get last 5 sessions
+      setRecentSessions(sessions)
+    } catch (error) {
+      console.error('Error fetching recent sessions:', error)
     }
   }
 
@@ -140,6 +181,7 @@ export default function DashboardPage() {
       return reminderDate >= rangeStart && reminderDate < rangeEnd
     })
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+
 
   return (
     <div className="space-y-4">
@@ -253,8 +295,54 @@ export default function DashboardPage() {
       </div>
       )}
 
+      {/* Quick Actions */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <Link
+          href="/study"
+          className="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 text-white rounded-lg p-4 shadow-md hover:shadow-lg transition-all duration-200 flex items-center gap-3 group"
+        >
+          <div className="w-10 h-10 rounded-lg bg-white/20 flex items-center justify-center group-hover:scale-110 transition-transform">
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <div>
+            <p className="font-bold text-sm">Start Focus Session</p>
+            <p className="text-xs text-white/80">Begin studying now</p>
+          </div>
+        </Link>
+        <Link
+          href="/tasks"
+          className="bg-white dark:bg-slate-800 rounded-lg p-4 shadow-md hover:shadow-lg transition-all duration-200 border border-slate-200 dark:border-slate-700 flex items-center gap-3 group"
+        >
+          <div className="w-10 h-10 rounded-lg bg-blue-50 dark:bg-blue-950/30 flex items-center justify-center group-hover:scale-110 transition-transform">
+            <svg className="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+          </div>
+          <div>
+            <p className="font-bold text-sm text-slate-900 dark:text-slate-100">Add Task</p>
+            <p className="text-xs text-slate-600 dark:text-slate-400">Create a new task</p>
+          </div>
+        </Link>
+        <Link
+          href="/reminders"
+          className="bg-white dark:bg-slate-800 rounded-lg p-4 shadow-md hover:shadow-lg transition-all duration-200 border border-slate-200 dark:border-slate-700 flex items-center gap-3 group"
+        >
+          <div className="w-10 h-10 rounded-lg bg-pink-50 dark:bg-pink-950/30 flex items-center justify-center group-hover:scale-110 transition-transform">
+            <svg className="w-6 h-6 text-pink-600 dark:text-pink-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+          </div>
+          <div>
+            <p className="font-bold text-sm text-slate-900 dark:text-slate-100">Add Reminder</p>
+            <p className="text-xs text-slate-600 dark:text-slate-400">Set a new reminder</p>
+          </div>
+        </Link>
+      </div>
+
       {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Tasks Panel */}
         <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-4 border border-slate-200 dark:border-slate-700 h-[500px] flex flex-col">
           <div className="flex items-center justify-between mb-3 flex-shrink-0">
@@ -348,7 +436,7 @@ export default function DashboardPage() {
         {/* Reminders Panel */}
         <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-4 border border-slate-200 dark:border-slate-700 h-[500px] flex flex-col">
           <div className="flex items-center justify-between mb-3 flex-shrink-0">
-            <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">Upcoming Reminders</h2>
+            <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">Today&apos;s Reminders</h2>
             <Link
               href="/reminders"
               className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-semibold"
@@ -420,6 +508,78 @@ export default function DashboardPage() {
             )}
           </div>
           )}
+        </div>
+
+        {/* Weekly Stats */}
+        <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-4 border border-slate-200 dark:border-slate-700 h-[500px] flex flex-col">
+          <div className="flex items-center justify-between mb-3 flex-shrink-0">
+            <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">This Week</h2>
+            <Link
+              href="/stats"
+              className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-semibold"
+            >
+              View Stats →
+            </Link>
+          </div>
+          <div className="space-y-2 flex-shrink-0 mb-4">
+            <div className="flex items-center justify-between p-2 bg-slate-50 dark:bg-slate-900/50 rounded-lg">
+              <span className="text-xs font-medium text-slate-600 dark:text-slate-400">Total Study Time</span>
+              <span className="text-sm font-bold text-slate-900 dark:text-slate-100">{formatDuration(weeklyStudyTime * 60)}</span>
+            </div>
+            <div className="flex items-center justify-between p-2 bg-slate-50 dark:bg-slate-900/50 rounded-lg">
+              <span className="text-xs font-medium text-slate-600 dark:text-slate-400">Today</span>
+              <span className="text-sm font-bold text-slate-900 dark:text-slate-100">{formatDuration(todayStudyTime * 60)}</span>
+            </div>
+            <div className="flex items-center justify-between p-2 bg-slate-50 dark:bg-slate-900/50 rounded-lg">
+              <span className="text-xs font-medium text-slate-600 dark:text-slate-400">Daily Average</span>
+              <span className="text-sm font-bold text-slate-900 dark:text-slate-100">
+                {formatDuration(Math.round((weeklyStudyTime / 7) * 60))}
+              </span>
+            </div>
+          </div>
+
+          {/* Recent Study Sessions */}
+          <div className="flex-1 flex flex-col min-h-0">
+            <div className="flex items-center justify-between mb-3 flex-shrink-0">
+              <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">Recent Sessions</h2>
+              <Link
+                href="/stats"
+                className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-semibold"
+              >
+                View All →
+              </Link>
+            </div>
+            <div className="space-y-1.5 flex-1 overflow-y-auto min-h-0">
+              {recentSessions.length > 0 ? (
+                recentSessions.map((session) => {
+                  const sessionDate = parseISO(session.startTime)
+                  return (
+                    <div
+                      key={session.id}
+                      className="p-2 bg-slate-50 dark:bg-slate-900/50 rounded-lg border border-slate-200 dark:border-slate-700 flex-shrink-0"
+                    >
+                      <div className="flex items-center justify-between gap-2 mb-1">
+                        <span className="text-xs font-semibold text-slate-900 dark:text-slate-100 capitalize">
+                          {session.category}
+                        </span>
+                        <span className="text-[10px] font-medium text-slate-600 dark:text-slate-400">
+                          {formatDuration((session.duration || 0))}
+                        </span>
+                      </div>
+                      <p className="text-[10px] text-slate-500 dark:text-slate-400">
+                        {format(sessionDate, 'MMM d, h:mm a')}
+                      </p>
+                    </div>
+                  )
+                })
+              ) : (
+                <div className="text-center py-8 text-slate-500 dark:text-slate-400 flex-shrink-0">
+                  <p className="text-xs mb-1">No recent sessions</p>
+                  <p className="text-[10px]">Start a focus session to see it here</p>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       </div>
     </div>

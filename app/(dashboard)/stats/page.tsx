@@ -458,7 +458,7 @@ export default function StatsPage() {
                   cx="50%"
                   cy="50%"
                   labelLine={false}
-                  label={({ name, percent }) => `${(percent * 100).toFixed(0)}%`}
+                  label={false}
                   outerRadius={80}
                   innerRadius={40}
                   fill="#8884d8"
@@ -470,7 +470,14 @@ export default function StatsPage() {
                   ))}
                 </Pie>
                 <Tooltip
-                  formatter={(value: number) => [`${value} minutes`, 'Time']}
+                  formatter={(value: number, name: string, props: any) => {
+                    const totalMinutes = categoryData.reduce((sum, c) => sum + c.value, 0)
+                    const percentage = totalMinutes > 0 ? Math.round((value / totalMinutes) * 100) : 0
+                    return [
+                      `${value} minutes (${percentage}%)`,
+                      props.payload.name
+                    ]
+                  }}
                   contentStyle={{
                     backgroundColor: 'rgba(255, 255, 255, 0.95)',
                     border: '1px solid #e2e8f0',
