@@ -117,7 +117,8 @@ export default function DashboardPage() {
     try {
       const response = await fetch('/api/stats?type=all-time')
       const data = await response.json()
-      const sessions = (data.sessions || []).slice(0, 5) // Get last 5 sessions
+      // Get the last 5 sessions (most recent) by reversing and taking first 5
+      const sessions = (data.sessions || []).slice(-5).reverse();
       setRecentSessions(sessions)
     } catch (error) {
       console.error('Error fetching recent sessions:', error)
