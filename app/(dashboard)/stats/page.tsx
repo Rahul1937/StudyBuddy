@@ -12,7 +12,7 @@ import {
   Pie,
   Cell,
 } from 'recharts'
-import { formatTime, formatDuration } from '@/lib/utils'
+import { formatTime, formatDuration, getStudyDayDateLabel, getDateRange } from '@/lib/utils'
 import { format, parseISO, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, addDays, subDays, addWeeks, subWeeks, addMonths, subMonths, eachDayOfInterval, isSameDay } from 'date-fns'
 import Link from 'next/link'
 
@@ -32,30 +32,77 @@ export default function StatsPage() {
   const [studyStats, setStudyStats] = useState<any>(null)
   const [sessions, setSessions] = useState<StudySession[]>([])
   const [loading, setLoading] = useState(true)
+  const [studyDayStartTime, setStudyDayStartTime] = useState<number | null>(null) // in minutes from midnight, null until fetched
 
   useEffect(() => {
-    fetchStudyStats()
-  }, [view, currentDate])
+    fetchStudyDayStartTime()
+  }, [])
+
+  useEffect(() => {
+    if (studyDayStartTime !== null) {
+      fetchStudyStats()
+    }
+  }, [view, currentDate, studyDayStartTime])
+
+  const fetchStudyDayStartTime = async () => {
+    try {
+      const response = await fetch('/api/user/goal')
+      const data = await response.json()
+      const startTime = data.studyDayStartTime ?? 0
+      setStudyDayStartTime(startTime)
+      
+      // On initial load, set currentDate to the current study day start time
+      // This ensures we show the correct study day data on first load
+      if (view === 'day') {
+        const now = new Date()
+        const currentStudyDay = getDateRange('daily', now, startTime)
+        setCurrentDate(currentStudyDay.start)
+      }
+    } catch (error) {
+      console.error('Error fetching study day start time:', error)
+      setStudyDayStartTime(0) // Set to default on error
+    }
+  }
 
   const fetchStudyStats = async () => {
+    // Don't fetch if studyDayStartTime hasn't been loaded yet
+    if (studyDayStartTime === null) {
+      return
+    }
+    
     setLoading(true)
     try {
-      let start: Date, end: Date
+      let dateParam: string
       
       if (view === 'day') {
-        start = startOfDay(currentDate)
-        end = endOfDay(currentDate)
+        // For day view, check if currentDate is already at a study day start time
+        // (i.e., it has the exact study day start time)
+        const currentMinutes = currentDate.getHours() * 60 + currentDate.getMinutes()
+        const currentSeconds = currentDate.getSeconds()
+        const currentMs = currentDate.getMilliseconds()
+        const isAtStudyDayStart = currentMinutes === studyDayStartTime && 
+                                   currentSeconds === 0 && 
+                                   currentMs === 0
+        
+        if (isAtStudyDayStart) {
+          // currentDate is already at a study day start, use it directly
+          dateParam = currentDate.toISOString()
+        } else {
+          // Determine the study day that contains currentDate and use its start
+          const studyDayRange = getDateRange('daily', currentDate, studyDayStartTime)
+          dateParam = studyDayRange.start.toISOString()
+        }
       } else if (view === 'week') {
-        start = startOfWeek(currentDate, { weekStartsOn: 0 })
-        end = endOfWeek(currentDate, { weekStartsOn: 0 })
+        const weekStart = startOfWeek(currentDate, { weekStartsOn: 0 })
+        dateParam = format(weekStart, 'yyyy-MM-dd')
       } else {
-        start = startOfMonth(currentDate)
-        end = endOfMonth(currentDate)
+        const monthStart = startOfMonth(currentDate)
+        dateParam = format(monthStart, 'yyyy-MM-dd')
       }
 
       const params = new URLSearchParams({
         type: view === 'day' ? 'daily' : view === 'week' ? 'weekly' : 'monthly',
-        date: format(start, 'yyyy-MM-dd'),
+        date: dateParam,
       })
       
       const response = await fetch(`/api/stats?${params.toString()}`)
@@ -73,65 +120,159 @@ export default function StatsPage() {
 
   // Generate hourly data for day view
   const getHourlyData = () => {
-    const hourlyData = Array.from({ length: 24 }, (_, i) => ({
-      hour: i,
-      label: `${i}:00`,
-      minutes: 0,
-    }))
+    if (studyDayStartTime === null) return []
+    const startHour = Math.floor(studyDayStartTime / 60)
+    const startMinute = studyDayStartTime % 60
+    
+    // Create 24 hour slots starting from study day start time
+    // e.g., if start is 5 AM: [5:00, 6:00, ..., 23:00, 0:00, 1:00, 2:00, 3:00, 4:00]
+    const hourlyData = Array.from({ length: 24 }, (_, i) => {
+      const hour = (startHour + i) % 24
+      const displayHour = hour < 10 ? `0${hour}` : `${hour}`
+      return {
+        hour: hour,
+        displayHour: displayHour,
+        label: `${displayHour}:${startMinute.toString().padStart(2, '0')}`,
+        minutes: 0,
+      }
+    })
+
+    // Helper to get which study day a session belongs to and its hour index
+    const getStudyDayHourIndex = (sessionDate: Date) => {
+      const sessionHour = sessionDate.getHours()
+      const sessionMinutes = sessionDate.getMinutes()
+      const sessionTotalMinutes = sessionHour * 60 + sessionMinutes
+      
+      // Calculate minutes from study day start
+      let minutesFromStart: number
+      if (sessionTotalMinutes >= studyDayStartTime) {
+        // Session is on or after study day start (e.g., 5 AM - 11:59 PM)
+        minutesFromStart = sessionTotalMinutes - studyDayStartTime
+      } else {
+        // Session is before study day start (e.g., 12 AM - 4:59 AM)
+        // This belongs to the previous study day, so add 24 hours worth of minutes
+        minutesFromStart = (24 * 60) - studyDayStartTime + sessionTotalMinutes
+      }
+      
+      // Calculate which hour slot (0-23) this belongs to
+      const hourIndex = Math.floor(minutesFromStart / 60)
+      return hourIndex >= 24 ? 23 : hourIndex
+    }
 
     sessions.forEach(session => {
       if (session.startTime) {
         const sessionDate = parseISO(session.startTime)
-        const hour = sessionDate.getHours()
+        const hourIndex = getStudyDayHourIndex(sessionDate)
         const duration = session.duration || 0
-        hourlyData[hour].minutes += Math.round(duration / 60)
+        hourlyData[hourIndex].minutes += Math.round(duration / 60)
       }
     })
 
     return hourlyData
   }
 
-  // Generate daily data for week view
+  // Generate daily data for week view - grouped by study days
   const getWeeklyData = () => {
-    const weekStart = startOfWeek(currentDate, { weekStartsOn: 0 })
-    const weekDays = eachDayOfInterval({ start: weekStart, end: endOfWeek(currentDate, { weekStartsOn: 0 }) })
+    if (studyDayStartTime === null) return []
+    // Get the week range based on study day boundaries
+    const weekRange = getDateRange('weekly', currentDate, studyDayStartTime ?? 0)
     
-    return weekDays.map(day => {
+    // Generate study days for the week (7 study days)
+    const studyDays: Array<{ start: Date; end: Date; date: Date }> = []
+    let currentDayStart = new Date(weekRange.start)
+    const weekEnd = new Date(weekRange.end)
+    
+    // Generate 7 study days within the week range
+    while (studyDays.length < 7 && currentDayStart < weekEnd) {
+      const dayEnd = new Date(currentDayStart)
+      dayEnd.setDate(dayEnd.getDate() + 1)
+      dayEnd.setHours(Math.floor(studyDayStartTime / 60), (studyDayStartTime % 60), 0, 0)
+      dayEnd.setMilliseconds(dayEnd.getMilliseconds() - 1)
+      
+      // Make sure we don't exceed the week end
+      if (dayEnd > weekEnd) {
+        dayEnd.setTime(weekEnd.getTime())
+      }
+      
+      studyDays.push({
+        start: new Date(currentDayStart),
+        end: new Date(dayEnd),
+        date: new Date(currentDayStart), // The date when this study day started
+      })
+      
+      // Move to next study day
+      currentDayStart = new Date(dayEnd)
+      currentDayStart.setMilliseconds(currentDayStart.getMilliseconds() + 1)
+    }
+    
+    return studyDays.map((studyDay) => {
+      // Filter sessions that fall within this study day
       const daySessions = sessions.filter(session => {
         const sessionDate = parseISO(session.startTime)
-        return isSameDay(sessionDate, day)
+        return sessionDate >= studyDay.start && sessionDate <= studyDay.end
       })
       
       const totalMinutes = daySessions.reduce((sum, s) => sum + Math.round((s.duration || 0) / 60), 0)
       
+      // Get day of week label (Sunday, Monday, etc.) based on the study day start date
+      const dayOfWeek = studyDay.date.getDay()
+      const dayLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+      
       return {
-        date: day,
-        label: format(day, 'EEE'),
-        fullLabel: format(day, 'MMM d'),
+        date: studyDay.date, // Use the study day start date for clicking
+        label: dayLabels[dayOfWeek],
+        fullLabel: format(studyDay.date, 'MMM d'),
         minutes: totalMinutes,
         hours: Math.round((totalMinutes / 60) * 10) / 10,
       }
     })
   }
 
-  // Generate daily data for month view
+  // Generate daily data for month view - grouped by study days
   const getMonthlyData = () => {
-    const monthStart = startOfMonth(currentDate)
-    const monthEnd = endOfMonth(currentDate)
-    const monthDays = eachDayOfInterval({ start: monthStart, end: monthEnd })
+    if (studyDayStartTime === null) return []
+    // Get the month range based on study day boundaries
+    const monthRange = getDateRange('monthly', currentDate, studyDayStartTime ?? 0)
     
-    return monthDays.map(day => {
+    // Generate study days for the month
+    const studyDays: Array<{ start: Date; end: Date; date: Date }> = []
+    let currentDayStart = new Date(monthRange.start)
+    const monthEnd = new Date(monthRange.end)
+    
+    // Generate all study days within the month range
+    while (currentDayStart < monthEnd) {
+      const dayEnd = new Date(currentDayStart)
+      dayEnd.setDate(dayEnd.getDate() + 1)
+      dayEnd.setHours(Math.floor(studyDayStartTime / 60), (studyDayStartTime % 60), 0, 0)
+      dayEnd.setMilliseconds(dayEnd.getMilliseconds() - 1)
+      
+      // Only include if it's within the month range
+      if (dayEnd <= monthEnd) {
+        studyDays.push({
+          start: new Date(currentDayStart),
+          end: new Date(dayEnd),
+          date: new Date(currentDayStart), // The date when this study day started
+        })
+      }
+      
+      // Move to next study day
+      currentDayStart = new Date(dayEnd)
+      currentDayStart.setMilliseconds(currentDayStart.getMilliseconds() + 1)
+    }
+    
+    return studyDays.map(studyDay => {
+      // Filter sessions that fall within this study day
       const daySessions = sessions.filter(session => {
         const sessionDate = parseISO(session.startTime)
-        return isSameDay(sessionDate, day)
+        return sessionDate >= studyDay.start && sessionDate <= studyDay.end
       })
       
       const totalMinutes = daySessions.reduce((sum, s) => sum + Math.round((s.duration || 0) / 60), 0)
       
       return {
-        date: day,
-        label: format(day, 'd'),
-        fullLabel: format(day, 'MMM d'),
+        date: studyDay.date, // Use the study day start date for clicking
+        label: format(studyDay.date, 'd'),
+        fullLabel: format(studyDay.date, 'MMM d'),
         minutes: totalMinutes,
         hours: Math.round((totalMinutes / 60) * 10) / 10,
       }
@@ -140,7 +281,14 @@ export default function StatsPage() {
 
   const handlePrevious = () => {
     if (view === 'day') {
-      setCurrentDate(subDays(currentDate, 1))
+      if (studyDayStartTime === null) return
+      const startTime = studyDayStartTime
+      // Navigate to previous study day
+      // Get the current study day that contains currentDate
+      const currentStudyDay = getDateRange('daily', currentDate, startTime)
+      // The previous study day starts exactly 24 hours before the current study day start
+      const previousStudyDayStart = new Date(currentStudyDay.start.getTime() - 24 * 60 * 60 * 1000)
+      setCurrentDate(previousStudyDayStart)
     } else if (view === 'week') {
       setCurrentDate(subWeeks(currentDate, 1))
     } else {
@@ -150,7 +298,14 @@ export default function StatsPage() {
 
   const handleNext = () => {
     if (view === 'day') {
-      setCurrentDate(addDays(currentDate, 1))
+      if (studyDayStartTime === null) return
+      const startTime = studyDayStartTime
+      // Navigate to next study day
+      // Get the current study day that contains currentDate
+      const currentStudyDay = getDateRange('daily', currentDate, startTime)
+      // The next study day starts exactly 24 hours after the current study day start
+      const nextStudyDayStart = new Date(currentStudyDay.start.getTime() + 24 * 60 * 60 * 1000)
+      setCurrentDate(nextStudyDayStart)
     } else if (view === 'week') {
       setCurrentDate(addWeeks(currentDate, 1))
     } else {
@@ -219,9 +374,21 @@ export default function StatsPage() {
         <div className="text-center">
           <h2 className="text-sm sm:text-lg font-bold text-slate-900 dark:text-slate-100">
             {view === 'day'
-              ? format(currentDate, 'EEEE, MMMM d, yyyy')
+              ? (() => {
+                  // For day view, show the date of the study day that contains currentDate
+                  if (studyDayStartTime === null) return format(currentDate, 'EEEE, MMMM d, yyyy')
+                  const studyDayDate = getStudyDayDateLabel(currentDate, studyDayStartTime ?? 0)
+                  return format(studyDayDate, 'EEEE, MMMM d, yyyy')
+                })()
               : view === 'week'
-              ? `Week of ${format(startOfWeek(currentDate, { weekStartsOn: 0 }), 'MMM d')} - ${format(endOfWeek(currentDate, { weekStartsOn: 0 }), 'MMM d, yyyy')}`
+              ? (() => {
+                  // For week view, show the study day week range
+                  if (studyDayStartTime === null) {
+                    return `Week of ${format(startOfWeek(currentDate, { weekStartsOn: 0 }), 'MMM d')} - ${format(endOfWeek(currentDate, { weekStartsOn: 0 }), 'MMM d, yyyy')}`
+                  }
+                  const weekRange = getDateRange('weekly', currentDate, studyDayStartTime ?? 0)
+                  return `Week of ${format(weekRange.start, 'MMM d')} - ${format(weekRange.end, 'MMM d, yyyy')}`
+                })()
               : format(currentDate, 'MMMM yyyy')}
           </h2>
           {view === 'day' && (
@@ -357,10 +524,15 @@ export default function StatsPage() {
             data={chartData} 
             margin={{ top: 10, right: 10, left: 0, bottom: 10 }}
             onClick={(data: any) => {
-              if ((view === 'week' || view === 'month') && data && data.activePayload && data.activePayload[0]) {
+              if ((view === 'week' || view === 'month') && data && data.activePayload && data.activePayload[0] && studyDayStartTime !== null) {
                 const clickedData = data.activePayload[0].payload
                 if (clickedData && clickedData.date) {
-                  setCurrentDate(clickedData.date)
+                  // clickedData.date is already the study day start date
+                  // Set it at the study day start time to ensure correct day view
+                  const startTime = studyDayStartTime
+                  const studyDayDate = new Date(clickedData.date)
+                  studyDayDate.setHours(Math.floor(startTime / 60), startTime % 60, 0, 0)
+                  setCurrentDate(studyDayDate)
                   setView('day')
                 }
               }

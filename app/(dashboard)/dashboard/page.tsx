@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { format, isToday, isTomorrow, parseISO, startOfWeek, endOfWeek } from 'date-fns'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { formatDuration } from '@/lib/utils'
+import { formatDuration, getCurrentStudyDayRange, isInCurrentStudyDay } from '@/lib/utils'
 
 interface Task {
   id: string
@@ -39,6 +39,7 @@ export default function DashboardPage() {
   const [dailyGoal, setDailyGoal] = useState(120) // in minutes, default 2 hours
   const [goalLoading, setGoalLoading] = useState(true)
   const [recentSessions, setRecentSessions] = useState<StudySession[]>([])
+  const [studyDayStartTime, setStudyDayStartTime] = useState(0) // in minutes from midnight
 
   useEffect(() => {
     fetchAllData()
@@ -46,6 +47,7 @@ export default function DashboardPage() {
     fetchWeeklyStudyTime()
     fetchRecentSessions()
     fetchDailyGoal()
+    fetchStudyDayStartTime()
   }, [])
 
   const fetchAllData = async () => {
@@ -82,14 +84,10 @@ export default function DashboardPage() {
 
   const fetchTodayStudyTime = async () => {
     try {
-      const today = new Date()
-      const start = new Date(today)
-      start.setHours(0, 0, 0, 0)
-      const end = new Date(start)
-      end.setDate(end.getDate() + 1)
-
+      // Pass current date/time so the API can correctly determine the current study day
+      const now = new Date()
       const response = await fetch(
-        `/api/stats?type=daily&date=${format(today, 'yyyy-MM-dd')}`
+        `/api/stats?type=daily&date=${now.toISOString()}`
       )
       const data = await response.json()
       setTodayStudyTime(data.totalMinutes || 0)
@@ -131,6 +129,7 @@ export default function DashboardPage() {
       const response = await fetch('/api/user/goal')
       const data = await response.json()
       setDailyGoal(data.dailyGoal || 120)
+      setStudyDayStartTime(data.studyDayStartTime ?? 0)
     } catch (error) {
       console.error('Error fetching daily goal:', error)
     } finally {
@@ -138,18 +137,20 @@ export default function DashboardPage() {
     }
   }
 
-  // Get date range for current day only
-  const getDateRange = () => {
-    const today = new Date()
-    const start = new Date(today)
-    start.setHours(0, 0, 0, 0)
-    const end = new Date(start)
-    end.setDate(end.getDate() + 1)
-    return { start, end }
+  const fetchStudyDayStartTime = async () => {
+    try {
+      const response = await fetch('/api/user/goal')
+      const data = await response.json()
+      setStudyDayStartTime(data.studyDayStartTime ?? 0)
+    } catch (error) {
+      console.error('Error fetching study day start time:', error)
+    }
   }
 
-  // Get date range for filtering (current day only)
-  const { start: rangeStart, end: rangeEnd } = getDateRange()
+  // Get date range for current study day (reactive to studyDayStartTime)
+  const studyDayRange = getCurrentStudyDayRange(studyDayStartTime)
+  const rangeStart = studyDayRange.start
+  const rangeEnd = studyDayRange.end
 
   // Task statistics for selected date/range
   const tasksInRange = tasks.filter(task => {
@@ -462,8 +463,14 @@ export default function DashboardPage() {
             {remindersForDate.length > 0 ? (
               remindersForDate.map((reminder) => {
                 const reminderDate = parseISO(reminder.date)
-                const isTodayReminder = isToday(reminderDate)
-                const isTomorrowReminder = isTomorrow(reminderDate)
+                const isTodayReminder = isInCurrentStudyDay(reminderDate, studyDayStartTime)
+                // For tomorrow, check if it's in the next study day
+                // Next study day starts right after the current study day ends
+                const nextStudyDayStart = new Date(rangeEnd.getTime() + 1)
+                const nextStudyDayEnd = new Date(nextStudyDayStart)
+                nextStudyDayEnd.setDate(nextStudyDayEnd.getDate() + 1)
+                nextStudyDayEnd.setMilliseconds(nextStudyDayEnd.getMilliseconds() - 1)
+                const isTomorrowReminder = reminderDate >= nextStudyDayStart && reminderDate < nextStudyDayEnd
 
                 return (
                   <div

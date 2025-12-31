@@ -45,6 +45,7 @@ model User {
   image         String?
   password      String?
   dailyGoal     Int?           @default(360) // Daily study goal in minutes (default 6 hours)
+  studyDayStartTime Int?       @default(0) // Study day start time in minutes from midnight (0-1439, default 0 = midnight)
   accounts      Account[]
   sessions      Session[]
   studySessions StudySession[]
