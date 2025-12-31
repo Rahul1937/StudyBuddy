@@ -64,7 +64,6 @@ export async function GET(request: NextRequest) {
       end = range.end
       console.log('start', start)
       console.log('end', end)
-      console.log('baseDate', baseDate)
     }
 
     const sessions = await prisma.studySession.findMany({
