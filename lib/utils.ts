@@ -30,8 +30,8 @@ export function formatDuration(seconds: number): string {
   }
 }
 
-export function getDateRange(type: 'daily' | 'weekly' | 'monthly', baseDate?: Date, studyDayStartTime: number = 0) {
-  const date = baseDate || new Date()
+export function getDateRange(type: 'daily' | 'weekly' | 'monthly', baseDate: Date, studyDayStartTime: number = 0) {
+  const date = new Date(baseDate)
   const start = new Date(date)
   const end = new Date(date)
 
