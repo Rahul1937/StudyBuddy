@@ -62,6 +62,9 @@ export async function GET(request: NextRequest) {
       const range = getDateRange(type as 'daily' | 'weekly' | 'monthly', baseDate, studyDayStartTime)
       start = range.start
       end = range.end
+      console.log('start', start)
+      console.log('end', end)
+      console.log('baseDate', baseDate)
     }
 
     const sessions = await prisma.studySession.findMany({
